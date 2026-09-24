@@ -431,7 +431,7 @@ $result_testi = $conn->query($testi_query);
                 <div class="why-choose-img-wrapper position-relative">
                     <div class="premium-shape-bg"></div>
                     <!-- Ensure you have a good placeholder image or change the path -->
-                    <img src="assets/images/why-choose-us.jpg" alt="Why Choose SS Bouncers" class="img-fluid rounded-3 shadow-lg position-relative w-100 object-fit-cover" style="height: 500px;">
+                    <img src="assets/images/banner/1.jpg" alt="Why Choose SS Bouncers" class="img-fluid rounded-3 shadow-lg position-relative w-100 object-fit-cover" style="height: 500px;">
                     
                     <!-- Floating Badge -->
                     <div class="satisfaction-badge d-flex align-items-center bg-white p-3 rounded shadow">
@@ -561,7 +561,7 @@ $brand_query = "SELECT * FROM brands ORDER BY id DESC";
 $result_brands = $conn->query($brand_query);
 
 // 2. Fetch Latest 3 Published Blogs
-$blog_query = "SELECT * FROM blogs WHERE status = 'published' ORDER BY created_at DESC LIMIT 3";
+$blog_query = "SELECT * FROM blogs WHERE status = 1 ORDER BY created_at DESC LIMIT 3";
 $result_blogs = $conn->query($blog_query);
 
 // 3. Fetch Map URL from Contacts
@@ -623,7 +623,7 @@ $map_url = !empty($contact_data['map']) ? $contact_data['map'] : '';
             if($result_blogs && $result_blogs->num_rows > 0):
                 while($blog = $result_blogs->fetch_assoc()):
                     // Truncate content for excerpt
-                    $blog_excerpt = mb_strimwidth(strip_tags($blog['content']), 0, 100, "...");
+                    $blog_excerpt = mb_strimwidth(strip_tags($blog['description']), 0, 100, "...");
                     $blog_date = date('d M, Y', strtotime($blog['created_at']));
             ?>
             <div class="col-lg-4 col-md-6">
@@ -637,14 +637,14 @@ $map_url = !empty($contact_data['map']) ? $contact_data['map'] : '';
                     </div>
                     <div class="card-body p-4 d-flex flex-column">
                         <h4 class="card-title fw-bold text-primary-dark mb-3">
-                            <a href="blog-details.php?slug=<?= htmlspecialchars($blog['slug_url']) ?>" class="text-decoration-none text-primary-dark blog-title-link">
+                            <a href="blog-details.php?slug=<?= htmlspecialchars($blog['slug']) ?>" class="text-decoration-none text-primary-dark blog-title-link">
                                 <?= htmlspecialchars($blog['title']) ?>
                             </a>
                         </h4>
                         <p class="card-text text-muted mb-4 flex-grow-1">
                             <?= $blog_excerpt ?>
                         </p>
-                        <a href="blog-details.php?slug=<?= htmlspecialchars($blog['slug_url']) ?>" class="read-more-link fw-bold mt-auto">
+                        <a href="blog-details.php?slug=<?= htmlspecialchars($blog['slug']) ?>" class="read-more-link fw-bold mt-auto">
                             Read More <i class="fa-solid fa-arrow-right ms-1"></i>
                         </a>
                     </div>
