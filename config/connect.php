@@ -1,24 +1,27 @@
 <?php
-// if (session_status() === PHP_SESSION_NONE) {
-//     session_start();
-// }
+if (session_status() === PHP_SESSION_NONE) {
+    // session_start();
+}
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once dirname(__DIR__) . '/vendor/autoload.php'; // go up from config/ to project root
 
-use Dotenv\Dotenv;
+// Database Configuration
+$local = true; 
 
-// Load .env from project root
-$dotenv = Dotenv::createImmutable(dirname(__DIR__));
-$dotenv->load();
-
-// Read env variables
-$host = $_ENV['DB_HOST'];
-$username = $_ENV['DB_USERNAME'];
-$password = $_ENV['DB_PASSWORD'];
-$dbName = $_ENV['DB_NAME'];
-$site = $_ENV['SITE'];
+if ($local) {
+    $host = 'localhost';
+    $username = 'root';
+    $password = '';
+    $dbName = 'ss_bouncer';
+    $site = "http://localhost/office_php_project/bouncer/";
+} else {
+    $host = 'localhost';
+    $username = 'u799879276_bhagirath_db';
+    $password = 'Bhagi@rath1';
+    $dbName = 'u799879276_bhagirath_db';
+    $site = 'https://bhagirathenterprises.co.in/';
+}
 
 // Make `$site` global
 global $site;
@@ -31,4 +34,7 @@ if ($conn->connect_error) {
     die("Database Connection Failed: " . $conn->connect_error);
 }
 
+// Optional: Set Character Encoding to UTF-8
 $conn->set_charset("utf8");
+
+?>
