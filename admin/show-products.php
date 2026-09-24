@@ -120,107 +120,106 @@ include "db-conn.php";
                                 <div class="QA_section">
                                     <div class="QA_table mb_30">
                                         <div class="table-responsive">
-                                         <table class="table table-striped table-bordered align-middle text-center">
-    <thead class="table-light">
-        <tr>
-            <th>#</th>
-            <th>ID</th>
-            <th>Product</th>
-            <th>Category</th>
-            <th>Subcategory</th>
-            <th>Image</th>
-            <th>Add More Image</th>
-            <th>MRP</th>
-            <th>Sale Price</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-<?php
-$sno = 1;
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
-$perPage = 10;
-$offset = ($page - 1) * $perPage;
+                                            <table class="table table-striped table-bordered align-middle text-center">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>ID</th>
+                                                        <th>Product</th>
+                                                        <th>Category</th>
+                                                        <th>Image</th>
+                                                        <th>Add More Image</th>
+                                                        <th>MRP</th>
+                                                        <th>Sale Price</th>
+                                                        <th>Status</th>
 
-// Correct JOINs: category on cate_id, subcategory on id (primary key)
-// COALESCE: agar pro_cate NULL hai to subcategory ke parent_id se category nikalo
-$sql = "SELECT p.*, c.categories AS category_name 
-        FROM products p
-        LEFT JOIN categories c ON p.pro_cate = c.cate_id";
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php
+                                                    $sno = 1;
+                                                    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+                                                    $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+                                                    $perPage = 10;
+                                                    $offset = ($page - 1) * $perPage;
 
-$countSql = "SELECT COUNT(*) as total FROM products p
-             LEFT JOIN categories c ON p.pro_cate = c.cate_id";
+                                                    $sql = "SELECT * FROM products";
+                                                    $countSql = "SELECT COUNT(*) as total FROM products";
 
-if (!empty($search)) {
-    $searchTerm = mysqli_real_escape_string($conn, $search);
-    $where = " WHERE p.pro_name LIKE '%$searchTerm%' OR p.pro_id LIKE '%$searchTerm%'";
-    $sql .= $where;
-    $countSql .= $where;
-}
+                                                    if (!empty($search)) {
+                                                        $searchTerm = mysqli_real_escape_string($conn, $search);
+                                                        $sql .= " WHERE pro_name LIKE '%$searchTerm%' OR pro_id LIKE '%$searchTerm%'";
+                                                        $countSql .= " WHERE pro_name LIKE '%$searchTerm%' OR pro_id LIKE '%$searchTerm%'";
+                                                    }
 
-$sql .= " ORDER BY p.pro_id DESC LIMIT $offset, $perPage";
+                                                    $sql .= " ORDER BY pro_id DESC LIMIT $offset, $perPage";
 
-$result = mysqli_query($conn, $sql);
-$countResult = mysqli_query($conn, $countSql);
-$totalRows = mysqli_fetch_assoc($countResult)['total'];
-$totalPages = ceil($totalRows / $perPage);
+                                                    $result = mysqli_query($conn, $sql);
+                                                    $countResult = mysqli_query($conn, $countSql);
+                                                    $totalRows = mysqli_fetch_assoc($countResult)['total'];
+                                                    $totalPages = ceil($totalRows / $perPage);
 
-if (mysqli_num_rows($result) > 0) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        $status_text = $row['status'] == "1" ? "Active" : "Inactive";
-        $status_color = $row['status'] == "1" ? "text-success" : "text-danger";
+                                                    if (mysqli_num_rows($result) > 0) {
+                                                        while ($row = mysqli_fetch_assoc($result)) {
+                                                            $status_text = $row['status'] == "1" ? "Active" : "Inactive";
+                                                            $status_color = $row['status'] == "1" ? "text-success" : "text-danger";
 
-        $image = $row['pro_img'];
-        $images = explode(",", $image);
-        $first_image = $images[0];
-        ?>
-        <tr>
-            <td><?= $sno++ ?></td>
-            <td class="fw-bold"><?= htmlspecialchars($row['pro_id']) ?></td>
-            <td><?= htmlspecialchars($row['pro_name']) ?></td>
-            
-            <!-- Category Name -->
-            <td><?= htmlspecialchars($row['category_name'] ?? '') ?></td>
-            
-            <!-- Subcategory Name -->
-            <td><?= htmlspecialchars($row['subcategory_name'] ?? '') ?></td>
-            
-            <td>
-                <img src="assets/img/uploads/<?= htmlspecialchars($first_image) ?>"
-                    alt="<?= htmlspecialchars($row['pro_name']) ?>"
-                    style="width: 100px;" class="img-thumbnail">
-            </td>
-            <td>
-                <a href="multiple_img.php?id=<?= $row['pro_id'] ?>">Manage Images</a>
-            </td>
-            <td><del>₹<?= number_format($row['mrp'], 2) ?></del></td>
-            <td class="text-primary">₹<?= number_format($row['selling_price'], 2) ?></td>
-            <td class="<?= $status_color ?>"><?= $status_text ?></td>
-            <td>
-                <div class="d-flex justify-content-center">
-                    <a href="edit_products.php?edit_product_details=<?= $row['pro_id'] ?>"
-                        class="btn btn-outline-info btn-sm me-2">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                    <a href="product_delete.php?delete=<?= $row['pro_id'] ?>"
-                        class="btn btn-outline-danger btn-sm"
-                        onclick="return confirm('Are you sure you want to delete this product?')">
-                        <i class="fas fa-trash-alt"></i>
-                    </a>
-                </div>
-            </td>
-        </tr>
-        <?php
-    }
-} else {
-    // Total columns: 11
-    echo '<tr><td colspan="11" class="text-center text-muted py-4">No products found</td></tr>';
-}
-?>
-    </tbody>
-</table>
+                                                            $image = $row['pro_img'];
+                                                            $images = explode(",", $image);
+                                                            $first_image = $images[0];
+                                                            ?>
+                                                            <tr>
+                                                                <td><?= $sno++ ?></td>
+                                                                <td class="fw-bold">
+                                                                    <?= htmlspecialchars(string: $row['pro_id']) ?>
+                                                                </td>
+                                                                <td><?= htmlspecialchars($row['pro_name']) ?></td>
+                                                                <td><?= htmlspecialchars($row['pro_cate']) ?></td>
+                                                                <td>
+                                                                    <img src="assets/img/uploads/<?= htmlspecialchars($first_image) ?>"
+                                                                        alt="<?= htmlspecialchars($row['pro_name']) ?>"
+                                                                        style="width: 100px;" class="img-thumbnail">
+                                                                </td>
+                                                                <td>
+                                                                    <a href="multiple_img.php?id=<?= $row['pro_id'] ?>" class="btn btn-success btn-sm">Manage
+                                                                        Images</a>
+                                                                </td>
+                                                                <td>
+    <del>
+        ₹<?= number_format((float)$row['mrp'], 2) ?>
+    </del>
+</td>
+
+<td class="text-primary">
+    ₹<?= number_format((float)$row['selling_price'], 2) ?>
+</td>
+                                                                    
+                                                                    
+                                                                <td class="<?= $status_color ?>"><?= $status_text ?></td>
+
+                                                                <td>
+                                                                    <div class="d-flex justify-content-center">
+                                                                        <a href="edit_products.php?edit_product_details=<?= $row['pro_id'] ?>"
+                                                                            class="btn btn-outline-info btn-sm me-2">
+                                                                            <i class="fas fa-edit"></i>
+                                                                        </a>
+                                                                        <a href="product_delete.php?delete=<?= $row['pro_id'] ?>"
+                                                                            class="btn btn-outline-danger btn-sm"
+                                                                            onclick="return confirm('Are you sure you want to delete this product?')">
+                                                                            <i class="fas fa-trash-alt"></i>
+                                                                        </a>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            <?php
+                                                        }
+                                                    } else {
+                                                        echo '<tr><td colspan="9" class="text-center text-muted py-4">No products found</td></tr>';
+                                                    }
+                                                    ?>
+                                                </tbody>
+                                            </table>
                                         </div>
 
                                         <!-- Pagination -->

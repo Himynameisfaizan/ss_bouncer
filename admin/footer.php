@@ -175,6 +175,7 @@
 <script src="assets/vendors/chart_am/chart-custom.js"></script>
 <script src="assets/js/dashboard_init.js"></script>
 <script src="assets/js/custom.js"></script>
+
 </body>
 
 </html>

@@ -1,270 +1,222 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 session_start();
 include "db-conn.php";
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // 1. Inputs ko clean kiya (Prepared Statement automatically SQL injection se bacha lega)
-    $title = trim($_POST['title']);
-    $content = trim($_POST['content']);
-    $author = trim($_POST['author']);
-    $status = trim($_POST['status']);
+$msg = "";
+$msg_class = "";
 
-    // 2. Slug generate kiya
-    $slug_url = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $title), '-'));
+function createSlug($string) {
+    return preg_replace('/[^A-Za-z0-9-]+/', '-', strtolower(trim($string)));
+}
 
-    // 3. Image Upload Handling
-    $image_name = '';
-    $upload_ok = true; // Is flag se hum decide karenge ki DB me insert karna hai ya nahi
+if (isset($_POST['add_blog'])) {
+    $title = mysqli_real_escape_string($conn, trim($_POST['title']));
+    $author = mysqli_real_escape_string($conn, trim($_POST['author']));
+    $description = mysqli_real_escape_string($conn, trim($_POST['description']));
+    $status = isset($_POST['status']) ? (int)$_POST['status'] : 1;
+    
+    // SEO Fields
+    $meta_title = mysqli_real_escape_string($conn, trim($_POST['meta_title']));
+    $meta_key = mysqli_real_escape_string($conn, trim($_POST['meta_key']));
+    $meta_desc = mysqli_real_escape_string($conn, trim($_POST['meta_desc']));
+    
+    $user_slug = trim($_POST['slug']);
+    $slug = !empty($user_slug) ? createSlug($user_slug) : createSlug($title);
 
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-
-        // STANDARD PATH: Wahi path use kiya hai jo product page pe chal raha hai
-        $uploadDir = "assets/img/uploads/";
-
-        if (!file_exists($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
-
-        $fileName = basename($_FILES['image']['name']);
-        $fileTmp = $_FILES['image']['tmp_name'];
-        $fileSize = $_FILES['image']['size'];
-        $fileType = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-
-        // Unique file name generate kiya
-        $newFileName = time() . '_blog.' . $fileType;
-        $uploadPath = $uploadDir . $newFileName;
-
-        $allowedTypes = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-
-        if (in_array($fileType, $allowedTypes)) {
-            if ($fileSize <= 5000000) { // 5MB Limit
-                if (move_uploaded_file($fileTmp, $uploadPath)) {
-                    $image_name = $newFileName;
-                } else {
-                    $_SESSION['error'] = "Failed to upload image. Folder permissions check karein: " . $uploadDir;
-                    $upload_ok = false;
+    if (!empty($title) && !empty($description)) {
+        $image_name = "";
+        if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+            $allowed_extensions = ['jpg', 'jpeg', 'png', 'webp'];
+            $file_extension = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+            
+            if (in_array($file_extension, $allowed_extensions)) {
+                $image_name = 'blog_' . time() . '_' . rand(1000, 9999) . '.' . $file_extension;
+                $upload_path = "assets/img/uploads/blogs/";
+                
+                if (!is_dir($upload_path)) {
+                    mkdir($upload_path, 0777, true);
                 }
+                move_uploaded_file($_FILES['image']['tmp_name'], $upload_path . $image_name);
             } else {
-                $_SESSION['error'] = "File is too large. Maximum size is 5MB.";
-                $upload_ok = false;
+                $msg = "Invalid image format! Only JPG, JPEG, PNG, and WEBP are allowed.";
+                $msg_class = "alert-danger";
             }
-        } else {
-            $_SESSION['error'] = "Invalid file type. Only JPG, PNG, WEBP & GIF allowed.";
-            $upload_ok = false;
         }
-    } elseif (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
-        // Agar PHP config limit exceed ho jaye (e.g. > 2MB default upload limit)
-        $_SESSION['error'] = "Server Image Upload Error Code: " . $_FILES['image']['error'];
-        $upload_ok = false;
-    }
 
-    // 4. Database Insert (Sirf tabhi chalega jab upload_ok true hoga)
-    if ($upload_ok) {
-        // Timestamps (created_at, updated_at) DB khud laga lega schema ke hisaab se
-        $sql = "INSERT INTO blogs (title, content, slug_url, image, author, status) VALUES (?, ?, ?, ?, ?, ?)";
-
-        $stmt = mysqli_prepare($conn, $sql);
-
-        if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "ssssss", $title, $content, $slug_url, $image_name, $author, $status);
-
-            if (mysqli_stmt_execute($stmt)) {
-                $_SESSION['success'] = "Blog added successfully!";
-                header("Location: view-all-blog.php");
+        if (empty($msg)) {
+            $insert_query = "INSERT INTO `blogs` (`title`, `slug`, `author`, `image`, `description`, `status`, `meta_title`, `meta_key`, `meta_desc`) 
+                             VALUES ('$title', '$slug', '$author', '$image_name', '$description', '$status', '$meta_title', '$meta_key', '$meta_desc')";
+            
+            if (mysqli_query($conn, $insert_query)) {
+                header("Location: blog.php?status=added");
                 exit();
             } else {
-                // Ye exactly batayega agar ENUM status ya kisi aur wajah se query fail hui
-                $_SESSION['error'] = "Database Execution Error: " . mysqli_stmt_error($stmt);
+                $msg = "Database Error: " . mysqli_error($conn);
+                $msg_class = "alert-danger";
             }
-        } else {
-            $_SESSION['error'] = "SQL Prepare Error: " . mysqli_error($conn);
         }
+    } else {
+        $msg = "Title and Content are required fields.";
+        $msg_class = "alert-warning";
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>Add New Blog | Khetarpal Trading Co.</title>
+    <title>Add New Blog | Admin Panel</title>
     <link rel="icon" href="assets/img/logo.png" type="image/png">
-
     <?php include "links.php"; ?>
-
-    <!-- CKEditor CDN -->
-    <script src="https://cdn.ckeditor.com/4.21.0/standard/ckeditor.js"></script>
-    <!-- Select2 -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .custom-card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+        .preview-img { max-width: 200px; max-height: 150px; display: none; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; padding: 5px;}
+        .slug-input-prefix { background-color: #f1f3f5; color: #6c757d; font-size: 0.85rem; display: flex; align-items: center; padding: 0 10px; border: 1px solid #ced4da; border-right: 0; border-top-left-radius: .25rem; border-bottom-left-radius: .25rem;}
+    </style>
 </head>
 
 <body class="crm_body_bg">
     <?php include "header.php"; ?>
 
-    <section class="main_content dashboard_part large_header_bg">
-        <div class="container-fluid g-0">
-            <div class="row">
-                <div class="col-lg-12 p-0">
-                    <?php include "top_nav.php"; ?>
-                </div>
-            </div>
-        </div>
+    <section class="main_content dashboard_part">
+        <div class="container-fluid g-0"><div class="row"><div class="col-lg-12 p-0"><?php include "top_nav.php"; ?></div></div></div>
 
         <div class="main_content_iner">
-            <div class="container-fluid p-0 sm_padding_15px">
-                <div class="row justify-content-center">
-                    <div class="col-lg-12">
-                        <div class="white_card card_height_100 mb_30">
+            <div class="container-fluid p-3">
+                
+                <?php if (!empty($msg)): ?>
+                    <div class="alert <?= $msg_class ?> alert-dismissible fade show" role="alert">
+                        <?= $msg ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
 
-                            <div class="white_card_header">
-                                <div class="box_header m-0">
-                                    <div class="main-title">
-                                        <h2 class="text-center">Add New Blog</h2>
-                                    </div>
-                                </div>
+                <div class="row">
+                    <div class="col-xl-12 col-lg-12 mb-4">
+                        <div class="white_card custom-card">
+                            <div class="card-header bg-white border-0 pt-4 pb-2 d-flex justify-content-between align-items-center">
+                                <h3 class="mb-0 fw-bold">Write New Blog Post</h3>
+                                <a href="blog.php" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Back to Blogs</a>
                             </div>
-
-                            <div class="white_card_body">
-
-                                <!-- Display Session Messages -->
-                                <?php if (isset($_SESSION['error'])): ?>
-                                    <div class="alert alert-danger font-weight-bold">
-                                        <i class="fas fa-exclamation-triangle"></i> <?= htmlspecialchars($_SESSION['error']);
-                                                                                    unset($_SESSION['error']); ?>
-                                    </div>
-                                <?php endif; ?>
-
-                                <?php if (isset($_SESSION['success'])): ?>
-                                    <div class="alert alert-success font-weight-bold">
-                                        <i class="fas fa-check-circle"></i> <?= htmlspecialchars($_SESSION['success']);
-                                                                            unset($_SESSION['success']); ?>
-                                    </div>
-                                <?php endif; ?>
-
-                                <div class="col-md-12 mb-4">
-                                    <a href="view-all-blog.php" class="btn btn-danger">
-                                        <i class="fas fa-list"></i> View All Blogs
-                                    </a>
-                                </div>
-
-                                <div class="card-body">
-                                    <!-- Form Action is self -->
-                                    <form method="POST" action="" enctype="multipart/form-data" class="p-4 shadow bg-white rounded">
-                                        <div class="row">
-
-                                            <!-- LEFT COLUMN -->
-                                            <div class="col-md-8">
-                                                <div class="mb-3">
-                                                    <label class="form-label font-weight-bold">Blog Title *</label>
-                                                    <input type="text" name="title" class="form-control" placeholder="Enter blog title" required
-                                                        value="<?= isset($_POST['title']) ? htmlspecialchars($_POST['title']) : '' ?>">
-                                                </div>
-
-                                                <div class="mb-3">
-                                                    <label class="form-label font-weight-bold">Content (Full Details) *</label>
-                                                    <textarea name="content" class="form-control" rows="10" id="editor" required>
-                                                        <?= isset($_POST['content']) ? htmlspecialchars($_POST['content']) : '' ?>
-                                                    </textarea>
-                                                </div>
-                                            </div>
-
-                                            <!-- RIGHT COLUMN -->
-                                            <div class="col-md-4">
-                                                <div class="mb-3">
-                                                    <label class="form-label font-weight-bold">Author Name *</label>
-                                                    <input type="text" name="author" class="form-control" placeholder="Admin or Author Name" required
-                                                        value="<?= isset($_POST['author']) ? htmlspecialchars($_POST['author']) : 'Admin' ?>">
-                                                </div>
-
-                                                <div class="mb-3">
-                                                    <label class="form-label font-weight-bold">Status *</label>
-                                                    <!-- Make sure these values match your DB ENUM exactly -->
-                                                    <select name="status" class="form-control select2" required>
-                                                        <option value="published" <?= (!isset($_POST['status']) || (isset($_POST['status']) && $_POST['status'] == 'published') ? 'selected' : '') ?>>Published</option>
-                                                        <option value="draft" <?= (isset($_POST['status']) && $_POST['status'] == 'draft') ? 'selected' : '' ?>>Draft</option>
-                                                        <option value="archived" <?= (isset($_POST['status']) && $_POST['status'] == 'archived') ? 'selected' : '' ?>>Archived</option>
-                                                    </select>
-                                                </div>
-
-                                                <div class="mb-4">
-                                                    <label class="form-label font-weight-bold">Featured Image *</label>
-                                                    <input type="file" name="image" class="form-control" required accept="image/*">
-                                                    <small class="text-muted d-block mt-1">Max size: 5MB (JPG, PNG, WEBP)</small>
-                                                    <div class="mt-3 text-center border p-2 bg-light rounded" style="min-height: 150px;">
-                                                        <img id="imagePreview" src="#" alt="Image preview" style="max-width: 100%; max-height: 200px; display: none;">
-                                                        <span id="previewPlaceholder" class="text-muted"><br><br>Image Preview Here</span>
-                                                    </div>
-                                                </div>
-
-                                                <div class="mb-3">
-                                                    <button type="submit" class="btn btn-success btn-lg btn-block shadow-sm">
-                                                        <i class="fas fa-plus-circle"></i> Publish Blog
-                                                    </button>
-                                                </div>
-                                            </div>
-
+                            <div class="white_card_body py-3">
+                                <form action="" method="POST" enctype="multipart/form-data">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Blog Title <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" name="title" id="blog_title_add" placeholder="Enter blog title" required>
                                         </div>
-                                    </form>
-                                </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Custom Slug (SEO URL) <span class="text-danger">*</span></label>
+                                            <div class="d-flex">
+                                                <span class="slug-input-prefix">site.com/blog/</span>
+                                                <input type="text" class="form-control" style="border-top-left-radius: 0; border-bottom-left-radius: 0;" name="slug" id="blog_slug_add" placeholder="e.g. customized-url-structure" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Author Name</label>
+                                            <input type="text" class="form-control" name="author" value="Admin">
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Status</label>
+                                            <select class="form-select" name="status">
+                                                <option value="1">Publish (Active)</option>
+                                                <option value="0">Draft (Hidden)</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- SEO Fields Section -->
+                                        <div class="col-md-12"><hr class="my-3"><h5 class="fw-bold text-primary mb-3">SEO Meta Configuration</h5></div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Meta Title</label>
+                                            <input type="text" class="form-control" name="meta_title" placeholder="SEO Title for search engines">
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Meta Keywords</label>
+                                            <input type="text" class="form-control" name="meta_key" placeholder="keyword1, keyword2, keyword3">
+                                        </div>
+
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label fw-bold">Meta Description</label>
+                                            <textarea class="form-control" name="meta_desc" rows="2" placeholder="Brief summary for Google search results (150-160 characters)"></textarea>
+                                        </div>
+                                        <div class="col-md-12"><hr class="my-3"></div>
+
+                                        <div class="col-md-12 mb-4">
+                                            <label class="form-label fw-bold">Featured Image</label>
+                                            <input type="file" class="form-control" name="image" id="imageInput" accept="image/*">
+                                            <img id="imagePreview" class="preview-img" src="#" alt="Preview">
+                                        </div>
+
+                                        <div class="col-md-12 mb-4">
+                                            <label class="form-label fw-bold">Blog Content <span class="text-danger">*</span></label>
+                                            <textarea class="form-control" name="description" id="add_blog_content" rows="10" placeholder="Type blog description here..." required></textarea>
+                                        </div>
+                                        
+                                        <div class="col-md-12 text-end">
+                                            <button type="submit" name="add_blog" class="btn btn-primary px-5 py-2"><i class="fas fa-paper-plane me-2"></i>Publish Blog Post</button>
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <?php include "footer.php"; ?>
-
-        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-        <script>
-            // Initialize CKEditor
-            CKEDITOR.replace('editor', {
-                toolbar: [{
-                        name: 'basicstyles',
-                        items: ['Bold', 'Italic', 'Underline', 'Strike', 'RemoveFormat']
-                    },
-                    {
-                        name: 'paragraph',
-                        items: ['NumberedList', 'BulletedList', 'Blockquote']
-                    },
-                    {
-                        name: 'links',
-                        items: ['Link', 'Unlink']
-                    },
-                    {
-                        name: 'insert',
-                        items: ['Image', 'Table']
-                    },
-                    {
-                        name: 'document',
-                        items: ['Source']
-                    }
-                ],
-                height: 400
-            });
-
-            // Initialize Select2 & Image Preview
-            $(document).ready(function() {
-                $('.select2').select2({
-                    minimumResultsForSearch: Infinity
-                });
-
-                // Better Image Preview Logic
-                $('input[type="file"]').change(function(e) {
-                    if (this.files && this.files[0]) {
-                        var reader = new FileReader();
-                        reader.onload = function(e) {
-                            $('#previewPlaceholder').hide();
-                            $('#imagePreview').attr('src', e.target.result).fadeIn();
-                        }
-                        reader.readAsDataURL(this.files[0]);
-                    }
-                });
-            });
-        </script>
     </section>
-</body>
 
+    <?php include "footer.php"; ?>
+<script src="https://cdn.ckeditor.com/4.21.0/standard/ckeditor.js"></script>
+    <script>
+        CKEDITOR.replace('add_blog_content', {
+            on: {
+                dialogShow: function(dialogEvent) {
+                    if (dialogEvent.data.name === 'link') {
+                        var dialog = dialogEvent.data;
+                        setTimeout(function() {
+                            var urlInput = dialog.getContentElement('info', 'url');
+                            if (urlInput && urlInput.getInputElement()) {
+                                urlInput.getInputElement().focus();
+                            }
+                        }, 100);
+                    }
+                }
+            }
+        });
+
+        function convertToSlug(text) {
+            return text.toLowerCase().replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');        
+        }
+
+        document.getElementById('blog_title_add').addEventListener('input', function() {
+            document.getElementById('blog_slug_add').value = convertToSlug(this.value);
+        });
+        
+        document.getElementById('blog_slug_add').addEventListener('blur', function() {
+            this.value = convertToSlug(this.value);
+        });
+
+        document.getElementById('imageInput').addEventListener('change', function(event) {
+            const preview = document.getElementById('imagePreview');
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { 
+                    preview.src = e.target.result; 
+                    preview.style.display = 'block'; 
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
 </html>

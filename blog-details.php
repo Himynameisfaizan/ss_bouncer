@@ -1,163 +1,174 @@
 <?php
-include "admin/db-conn.php";
-$pageTitle = "Blog Details";
-include 'includes/header.php';
-include 'includes/breadcrumb.php';
+// Database connection include karein
+include('config/connect.php');
 
-// 1. WhatsApp Number Fetch (Contacts Table se)
-$contact_query = mysqli_query($conn, "SELECT wp_number FROM contacts LIMIT 1"); //
-$contact_data = mysqli_fetch_assoc($contact_query);
-$wp_number = !empty($contact_data['wp_number']) ? $contact_data['wp_number'] : '917200864976'; //
+// URL se slug fetch karein
+$slug = isset($_GET['slug']) ? mysqli_real_escape_string($conn, $_GET['slug']) : '';
 
-// 2. Fetch Blog Data based on ID or Slug
-$blog = null;
-if (isset($_GET['slug'])) {
-    $slug = mysqli_real_escape_string($conn, $_GET['slug']);
-    $query = mysqli_query($conn, "SELECT * FROM blogs WHERE slug_url = '$slug' AND status = 'published' LIMIT 1"); //
-    $blog = mysqli_fetch_assoc($query);
-} elseif (isset($_GET['id'])) {
-    $id = (int) $_GET['id'];
-    $query = mysqli_query($conn, "SELECT * FROM blogs WHERE id = $id AND status = 'published' LIMIT 1"); //[cite: 1]
-    $blog = mysqli_fetch_assoc($query);
-}
+// Database se specific blog fetch karein
+$blogQuery = mysqli_query($conn, "SELECT * FROM blogs WHERE slug = '$slug' AND status = 1");
+$blog = mysqli_fetch_assoc($blogQuery);
 
-// Agar blog DB me nahi mila to list page par redirect kar do
+// Agar blog nahi milta (invalid slug) toh wapas blog page par bhej dein
 if (!$blog) {
     echo "<script>window.location.href='blog.php';</script>";
     exit;
 }
 
-// 3. Blog Data Variables Setup
-// Image path exactly wahi jo tumne manga hai
-$raw_img = $blog['image']; //[cite: 1]
-$img_src = !empty($raw_img) ? 'admin/assets/img/uploads/' . $raw_img : 'assets/images/blog/default.jpg';
+// Dynamic Variables Setup
+$pageTitle = $blog['title'];
+$publishDate = date('F d, Y', strtotime($blog['created_at']));
+$authorName = !empty($blog['author']) ? $blog['author'] : 'Admin Team';
+$mainImage = !empty($blog['image']) ? 'admin/assets/img/uploads/blogs/' . $blog['image'] : 'https://images.unsplash.com/photo-1606914501449-5a96b6ce24ca?q=80&w=1200';
 
-$blog_title = htmlspecialchars($blog['title']); //[cite: 1]
-$blog_author = !empty($blog['author']) ? htmlspecialchars($blog['author']) : 'Admin'; //[cite: 1]
-$blog_date = date('F d, Y', strtotime($blog['created_at'])); //[cite: 1]
+// Current Page URL for Social Sharing
+$currentURL = "http://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 
-// HTML entities aur slashes ko decode karna (Rich Text styling ke liye)
-$blog_content = htmlspecialchars_decode(stripslashes($blog['content'])); //[cite: 1]
-
-// Current Page URL (Social Share buttons ke liye)
-$current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-$encoded_url = urlencode($current_url);
-$encoded_title = urlencode($blog_title);
+include 'includes/header.php';
+include 'includes/breadcrumb.php';
 ?>
 
-<section class="section-padding bg-light-gray">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title><?= htmlspecialchars($blog['meta_title']); ?></title>
+    <meta name="description" content="<?= htmlspecialchars(strip_tags($blog['meta_desc'])); ?>">
+    <meta name="keywords" content="<?= htmlspecialchars($blog['meta_key']); ?>">
+    
+    <link rel="icon" href="<?= htmlspecialchars($favicon); ?>" type="image/x-icon">
+    <!-- Blog Posting Schema Markup (JSON-LD) -->
+    <script type="application/ld+json">
+        {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "<?= htmlspecialchars($blog['title']); ?>",
+        "image": "<?= $site; ?>/admin/assets/img/uploads/blogs/<?= htmlspecialchars($blog['image']); ?>",
+        "author": {
+            "@type": "Person",
+            "name": "<?= htmlspecialchars($blog['author'] ?? 'Admin'); ?>"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Bhagirath Enterprise",
+            "logo": {
+            "@type": "ImageObject",
+            "url": "<?= $site; ?>/assets/images/logo/logo.png"
+            }
+        },
+        "datePublished": "<?= htmlspecialchars($blog['created_at']); ?>",
+        "description": "<?= htmlspecialchars(strip_tags(substr($blog['description'], 0, 150))); ?>"
+        }
+    </script>
+</head>
+<body>
+    
+<section class="single-blog-section">
     <div class="container">
         <div class="row">
 
             <!-- Main Content Area -->
-            <div class="col-lg-8 mb-5 mb-lg-0" data-aos="fade-up">
-                <img src="<?= $img_src; ?>" alt="<?= $blog_title; ?>" class="blog-details-img w-100 rounded mb-4"
-                    style="object-fit: cover; max-height: 500px;">
+            <div class="col-lg-8 pe-lg-5">
+                <div class="blog-details-content">
 
-                <div class="blog-meta mb-3 text-muted">
-                    <span class="me-3"><i class="fas fa-user text-primary-custom"></i> By <?= $blog_author; ?></span>
-                    <span class="me-3"><i class="fas fa-calendar-alt text-primary-custom"></i> <?= $blog_date; ?></span>
-                    <!-- Database me category/comments nahi hai to inhe default rakha hai ya remove kar sakte ho -->
-                    <span><i class="fas fa-folder text-primary-custom"></i> Updates</span>
-                </div>
+                    <img src="<?php echo $mainImage; ?>" alt="<?php echo $blog['title']; ?>">
 
-                <h2 class="fw-bold text-secondary mb-4"><?= $blog_title; ?></h2>
-
-                <!-- Content Area -->
-                <div class="post-content service-details-content">
-                    <?= $blog_content; ?>
-                </div>
-
-                <!-- Share Tags -->
-                <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top flex-wrap gap-3">
-                    <div>
-                        <span class="fw-bold text-dark me-2">Tags:</span>
-                        <span class="badge bg-secondary">Security</span>
-                        <span class="badge bg-secondary">Safety</span>
-                        <span class="badge bg-secondary">Services</span>
+                    <div class="blog-meta-top">
+                        <span><i class="fa-regular fa-calendar-days"></i> <?php echo $publishDate; ?></span>
+                        <span><i class="fa-regular fa-user"></i> By <?php echo $authorName; ?></span>
+                        <span><i class="fa-regular fa-folder-open"></i> News & Insights</span>
                     </div>
-                    <div>
-                        <span class="fw-bold text-dark me-2">Share:</span>
-                        <a href="https://www.facebook.com/sharer/sharer.php?u=<?= $encoded_url; ?>" target="_blank"
-                            class="text-secondary fs-5 me-2 hover-primary"><i class="fab fa-facebook"></i></a>
-                        <a href="https://twitter.com/intent/tweet?url=<?= $encoded_url; ?>&text=<?= $encoded_title; ?>"
-                            target="_blank" class="text-secondary fs-5 me-2 hover-primary"><i
-                                class="fab fa-twitter"></i></a>
-                        <a href="https://www.linkedin.com/shareArticle?mini=true&url=<?= $encoded_url; ?>&title=<?= $encoded_title; ?>"
-                            target="_blank" class="text-secondary fs-5 hover-primary"><i
-                                class="fab fa-linkedin"></i></a>
+
+                    <h1><?php echo $blog['title']; ?></h1>
+
+                    <div class="blog-description py-4">
+                        <?php echo $blog['description']; ?>
                     </div>
+
+                    <!-- Share Options -->
+                    <div class="share-box">
+                        <span>Share this article:</span>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode($currentURL); ?>" target="_blank" class="share-btn bg-fb"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="https://twitter.com/intent/tweet?url=<?php echo urlencode($currentURL); ?>&text=<?php echo urlencode($blog['title']); ?>" target="_blank" class="share-btn bg-tw"><i class="fa-brands fa-twitter"></i></a>
+                        <a href="https://www.linkedin.com/shareArticle?mini=true&url=<?php echo urlencode($currentURL); ?>" target="_blank" class="share-btn bg-in"><i class="fa-brands fa-linkedin-in"></i></a>
+                        <a href="https://api.whatsapp.com/send?text=<?php echo urlencode($blog['title'] . " " . $currentURL); ?>" target="_blank" class="share-btn bg-wa"><i class="fa-brands fa-whatsapp"></i></a>
+                    </div>
+
                 </div>
             </div>
 
             <!-- Sidebar Area -->
-            <div class="col-lg-4" data-aos="fade-left">
+            <div class="col-lg-4 mt-5 mt-lg-0">
+                <div class="blog-sidebar">
 
-                <!-- Search Widget -->
-                <div class="sidebar-widget bg-white p-4 rounded shadow-sm mb-4">
-                    <h4 class="sidebar-widget-title fw-bold mb-3">Search</h4>
-                    <form action="blog.php" method="GET" class="d-flex">
-                        <input type="text" name="search" class="form-control me-2" placeholder="Search blog..."
-                            required>
-                        <button class="btn btn-primary-custom" type="submit"><i class="fas fa-search"></i></button>
-                    </form>
-                </div>
+                    <!-- Search Widget -->
+                    <div class="sidebar-widget">
+                        <h4 class="sidebar-title">Search</h4>
+                        <form class="sidebar-search" action="blog.php" method="GET">
+                            <input type="text" name="search" placeholder="Search insights...">
+                            <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        </form>
+                    </div>
 
-                <!-- Recent Posts Widget -->
-                <div class="sidebar-widget bg-white p-4 rounded shadow-sm mb-4">
-                    <h4 class="sidebar-widget-title fw-bold mb-3">Recent Posts</h4>
-                    <ul class="recent-post-list list-unstyled mb-0">
+                    <!-- Categories Widget -->
+                    <div class="sidebar-widget">
+                        <h4 class="sidebar-title">Categories</h4>
+                        <ul class="sidebar-cats">
+                            <li><a href="blog.php">Export Trends <span>(12)</span></a></li>
+                            <li><a href="blog.php">Farming Practices <span>(08)</span></a></li>
+                            <li><a href="blog.php">Health Benefits <span>(15)</span></a></li>
+                            <li><a href="blog.php">Quality & Testing <span>(05)</span></a></li>
+                            <li><a href="blog.php">Company News <span>(03)</span></a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Dynamic Recent Posts Widget -->
+                    <div class="sidebar-widget">
+                        <h4 class="sidebar-title">Recent Posts</h4>
+
                         <?php
-                        // Sidebar ke liye other recent posts fetch karna
-                        $recent_query = mysqli_query($conn, "SELECT id, title, slug_url, image, created_at FROM blogs WHERE status = 'published' AND id != {$blog['id']} ORDER BY created_at DESC LIMIT 3"); //[cite: 1]
-                        
-                        if ($recent_query && mysqli_num_rows($recent_query) > 0) {
-                            while ($recent = mysqli_fetch_assoc($recent_query)) {
-                                $recent_img = !empty($recent['image']) ? 'admin/assets/img/uploads/' . $recent['image'] : 'assets/images/blog/default.jpg'; //[cite: 1]
-                                $recent_title = htmlspecialchars($recent['title']); //[cite: 1]
-                                $recent_date = date('M d, Y', strtotime($recent['created_at'])); //[cite: 1]
-                                $recent_link = !empty($recent['slug_url']) ? 'blog-details.php?slug=' . urlencode($recent['slug_url']) : 'blog-details.php?id=' . $recent['id']; //[cite: 1]
-                                ?>
-                                <li class="d-flex mb-3 align-items-center">
-                                    <img src="<?= $recent_img; ?>" alt="<?= $recent_title; ?>"
-                                        class="recent-post-img rounded me-3"
-                                        style="width: 70px; height: 70px; object-fit: cover;">
-                                    <div>
-                                        <span class="small text-muted d-block mb-1"><i
-                                                class="fas fa-calendar-alt text-primary-custom me-1"></i>
-                                            <?= $recent_date; ?></span>
-                                        <a href="<?= $recent_link; ?>"
-                                            class="recent-post-title text-dark fw-bold text-decoration-none"
-                                            style="font-size: 14px;"><?= $recent_title; ?></a>
+                        // Fetch 3 Recent Blogs excluding the current one
+                        $recentQuery = mysqli_query($conn, "SELECT * FROM blogs WHERE status = 1 AND blog_id != '{$blog['blog_id']}' ORDER BY created_at DESC LIMIT 3");
+
+                        if (mysqli_num_rows($recentQuery) > 0) {
+                            while ($recentBlog = mysqli_fetch_assoc($recentQuery)):
+                                $r_date = date('M d, Y', strtotime($recentBlog['created_at']));
+                                $r_img = !empty($recentBlog['image']) ? 'admin/assets/img/uploads/blogs/' . $recentBlog['image'] : 'https://images.unsplash.com/photo-1615486171448-4228965f7c32?q=80&w=200';
+                        ?>
+                                <div class="recent-post-item">
+                                    <img src="<?php echo $r_img; ?>" alt="<?php echo $recentBlog['title']; ?>">
+                                    <div class="recent-post-info">
+                                        <h4><a href="blog-details.php?slug=<?php echo $recentBlog['slug']; ?>"><?php echo $recentBlog['title']; ?></a></h4>
+                                        <span><?php echo $r_date; ?></span>
                                     </div>
-                                </li>
-                                <?php
-                            }
+                                </div>
+                        <?php
+                            endwhile;
                         } else {
-                            echo `"<li class="
-                            text - muted
-                            small
-                            ">No other recent posts found.</li>"`;
+                            echo "<p style='color: #666; font-size: 13px;'>No recent posts available.</p>";
                         }
                         ?>
-                    </ul>
-                </div>
+                    </div>
 
-                <!-- Contact Help Widget -->
-                <div class="sidebar-widget help-widget bg-dark text-white p-4 rounded text-center shadow-sm">
-                    <i class="fas fa-headset fs-1 text-primary-custom mb-3"></i>
-                    <h4 class="fw-bold mb-3">Need Any Help?</h4>
-                    <p class="text-white-50 mb-4">Contact our expert team to get a customized security plan.</p>
-                    <a href="https://wa.me/<?= $wp_number; ?>?text=Hello, I am interested in your services after reading the blog."
-                        target="_blank" class="btn btn-primary-custom w-100">
-                        Chat on WhatsApp
-                    </a>
-                </div>
+                    <!-- CTA Widget -->
+                    <div class="sidebar-widget text-center" style="background: var(--primary-green); color: white;">
+                        <i class="fa-solid fa-box-open" style="font-size: 40px; color: var(--accent-orange); margin-bottom: 15px;"></i>
+                        <h4 style="font-weight: 800; margin-bottom: 15px;">Looking for Bulk Spices?</h4>
+                        <p style="font-size: 0.95rem; opacity: 0.9; margin-bottom: 20px;">Get a free quotation for your international export requirements today.</p>
+                        <a href="contact.php" class="btn-theme" style="background: var(--accent-orange); color: white; padding: 10px 20px; border-radius: 30px; text-decoration: none; font-weight: 700; display: inline-block;">Request Quote</a>
+                    </div>
 
+                </div>
             </div>
 
         </div>
     </div>
 </section>
 
+<!-- Premium Inquiry Section -->
+<?php include ('includes/inquiry-form.php'); ?>
+
+<!-- Include Footer -->
 <?php include 'includes/footer.php'; ?>

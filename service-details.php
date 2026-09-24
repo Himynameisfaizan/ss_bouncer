@@ -1,142 +1,141 @@
 <?php
-// 1. Database Connection Include
-include 'admin/db-conn.php';
+// Database Connection
+include 'config/connect.php'; 
 
-$service_found = false;
-$pageTitle = "Service Details";
-
-// 2. URL se Service ID fetch karo aur DB mein check karo
-if (isset($_GET['id'])) {
+// Fetch Service Details safely
+if(isset($_GET['id']) && is_numeric($_GET['id'])) {
     $service_id = intval($_GET['id']);
-
-    $stmt = $conn->prepare("SELECT * FROM services WHERE id = ?");
-    $stmt->bind_param("i", $service_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $service = $result->fetch_assoc();
-        $pageTitle = $service['service_name'];
-        $service_found = true; // Service mil gayi
+    
+    $query = "SELECT * FROM services WHERE id = $service_id";
+    $result = mysqli_query($conn, $query);
+    
+    if(mysqli_num_rows($result) > 0) {
+        $service = mysqli_fetch_assoc($result);
+        
+        // --- DYNAMIC SEO LOGIC FROM DATABASE ---
+        $pageTitle = htmlspecialchars($service['service_name']) . " | EURASIASTONEINDIA";
+        $meta_description = htmlspecialchars(strip_tags($service['short_desc'])); // Short desc from DB
+        $meta_keywords = strtolower(str_replace(' ', ', ', $service['service_name'])) . ", export services, EURASIASTONEINDIA";
+        
+        $imagePath = !empty($service['img_path']) ? 'admin/assets/img/uploads/' . $service['img_path'] : 'assets/images/default-service-large.jpg';
+        
+    } else {
+        // Redirect if ID not found
+        header("Location: services.php");
+        exit();
     }
+} else {
+    // Redirect if no ID provided
+    header("Location: services.php");
+    exit();
 }
 
-include 'includes/header.php';
-include 'includes/breadcrumb.php';
+include 'includes/header.php'; 
+// Optional: Include Breadcrumb here if you want
 ?>
 
-<section class="section-padding bg-light-gray">
-    <div class="container">
-
-        <?php if ($service_found): ?>
-            <!-- ================= CONTENT FOUND ================= -->
-            <div class="row">
-
-                <div class="col-lg-8 mb-5 mb-lg-0" data-aos="fade-up">
-
-                    <img src="admin/assets/img/uploads/<?php echo htmlspecialchars($service['img_path']); ?>"
-                        alt="<?php echo htmlspecialchars($service['service_name']); ?>" class="service-details-img">
-
-                    <h2 class="fw-bold text-secondary mb-4"><?php echo htmlspecialchars($service['service_name']); ?></h2>
-
-                    <p class="text-muted mb-4" style="line-height: 1.8;">
-                        <?php echo nl2br(htmlspecialchars_decode($service['short_desc'])); ?>
-                    </p>
-
-                    <?php if (!empty($service['long_desc'])): ?>
-                        <p class="text-muted mb-5" style="line-height: 1.8;">
-                            <?php echo nl2br(htmlspecialchars_decode($service['long_desc'])); ?>
-                        </p>
-                    <?php endif; ?>
-
-                    <?php if (!empty($service['benefits'])): ?>
-                        <h3 class="fw-bold text-secondary mb-4">Key Benefits of Our Service</h3>
-                        <div class="row mb-5">
-                            <?php
-                            $benefits_array = explode(',', $service['benefits']);
-                            $benefits_array = array_filter(array_map('trim', $benefits_array));
-                            $benefits_array = array_values($benefits_array);
-
-                            $total_benefits = count($benefits_array);
-                            $half = ceil($total_benefits / 2);
-                            ?>
-
-                            <!-- Column 1 -->
-                            <div class="col-md-6">
-                                <ul class="list-custom">
-                                    <?php
-                                    for ($i = 0; $i < $half; $i++) {
-                                        echo '<li><i class="fas fa-check-circle"></i> ' . htmlspecialchars($benefits_array[$i]) . '</li>';
-                                    }
-                                    ?>
-                                </ul>
-                            </div>
-
-                            <!-- Column 2 -->
-                            <div class="col-md-6">
-                                <ul class="list-custom">
-                                    <?php
-                                    for ($i = $half; $i < $total_benefits; $i++) {
-                                        echo '<li><i class="fas fa-check-circle"></i> ' . htmlspecialchars($benefits_array[$i]) . '</li>';
-                                    }
-                                    ?>
-                                </ul>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                </div>
-
-                <!-- Sidebar Area -->
-                <div class="col-lg-4" data-aos="fade-left">
-                    <!-- Services List Widget (Dynamic) -->
-                    <div class="sidebar-widget">
-                        <h4 class="sidebar-widget-title">All Services</h4>
-                        <ul class="service-list">
-                            <?php
-                            // Database se saari services fetch karo Sidebar ke liye
-                            $all_services = $conn->query("SELECT id, service_name FROM services ORDER BY id DESC LIMIT 10");
-
-                            if ($all_services && $all_services->num_rows > 0) {
-                                while ($row = $all_services->fetch_assoc()) {
-                                    $isActive = ($row['id'] == $service_id) ? 'active' : '';
-                                    echo '<li><a href="service-details.php?id=' . $row['id'] . '" class="' . $isActive . '">' . htmlspecialchars($row['service_name']) . ' <i class="fas fa-angle-right float-end mt-1"></i></a></li>';
-                                }
-                            } else {
-                                echo '<li><a href="#">No other services available</a></li>';
-                            }
-                            ?>
-                        </ul>
-                    </div>
-
-                    <!-- Contact Help Widget -->
-                    <div class="sidebar-widget help-widget">
-                        <i class="fas fa-headset fs-1 text-primary-custom mb-3"></i>
-                        <h4 class="fw-bold mb-3">Need Any Help?</h4>
-                        <p class="text-white-50 mb-4">Contact our expert team to get a customized security plan for your
-                            premises.</p>
-                        <h5 class="text-primary-custom fw-bold mb-4"><i class="fas fa-phone-alt me-2"></i> <a class="text-primary-custom fw-bold mb-4" style="text-decoration: none;" href="tel:+917200864976">+91 72008 64976</a>
-                        </h5>
-                        <a href="https://wa.me/917200864976?text=Hello,%20I%20am%20interested%20in%20<?php echo urlencode($service['service_name']); ?>"
-                            target="_blank" class="btn btn-primary-custom w-100">Chat on WhatsApp</a>
-                    </div>
-                </div>
-
-            </div>
-        <?php else: ?>
-            <!-- ================= CONTENT NOT FOUND ================= -->
-            <div class="row justify-content-center text-center py-5">
-                <div class="col-md-8" data-aos="zoom-in">
-                    <i class="fas fa-exclamation-triangle text-primary-custom mb-4" style="font-size: 60px;"></i>
-                    <h2 class="fw-bold text-secondary mb-3">No Service Details Found!</h2>
-                    <p class="text-muted mb-5 fs-5">We couldn't find the service you are looking for. It might have been
-                        removed or the link is incorrect.</p>
-                    <a href="services.php" class="btn btn-primary-custom px-4 py-2"><i class="fas fa-arrow-left me-2"></i>
-                        Back to Services</a>
-                </div>
-            </div>
-        <?php endif; ?>
-
+<!-- SERVICE DETAILS HEADER -->
+<section class="py-5" style="background-color: #17385A; color: white;">
+    <div class="container py-4">
+        <h1 class="text-uppercase" style="font-weight: 700; color: #fff;"><?= htmlspecialchars($service['service_name']) ?></h1>
+        <p class="lead mb-0" style="color: #c9d6e4;">Premium Agricultural Export Solutions</p>
     </div>
 </section>
+
+<!-- MAIN CONTENT SECTION -->
+<section class="section-padding bg-light" style="padding-top: 60px; padding-bottom: 80px;">
+    <div class="container">
+        <div class="row g-5">
+            
+            <!-- Left Column: Image and Description -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
+                    <img src="<?= $imagePath ?>" alt="<?= htmlspecialchars($service['service_name']) ?>" class="img-fluid w-100" style="max-height: 450px; object-fit: cover;">
+                </div>
+                
+                <div class="service-content bg-white p-4 p-md-5 rounded-4 shadow-sm">
+                    <h2 class="mb-4" style="color: #17385A; font-weight: 700;">Overview</h2>
+                    <h5 class="text-muted mb-4" style="line-height: 1.6;">
+                        <?= htmlspecialchars($service['short_desc']) ?>
+                    </h5>
+                    
+                    <!-- Long Description from DB (It contains HTML tags as per your DB dump, so no htmlspecialchars here) -->
+                    <div class="long-desc-content" style="color: #4a5568; line-height: 1.8; font-size: 1.05rem;">
+                        <?= $service['long_desc'] ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Sidebar CTA & Contact -->
+            <div class="col-lg-4">
+                <!-- Request Quote Box -->
+                <div class="bg-white p-4 rounded-4 shadow-sm mb-4" style="border-top: 5px solid #E3000F;">
+                    <h4 class="mb-3" style="color: #17385A; font-weight: 700;">Interested in this Service?</h4>
+                    <p class="text-muted mb-4 small">Get a customized quotation for our <strong><?= htmlspecialchars($service['service_name']) ?></strong>. Our export experts will get back to you immediately.</p>
+                    
+                    <form action="contact-process.php" method="POST">
+                        <input type="hidden" name="interested_service" value="<?= htmlspecialchars($service['service_name']) ?>">
+                        
+                        <div class="mb-3">
+                            <input type="text" name="name" class="form-control" placeholder="Your Name / Company Name" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="email" name="email" class="form-control" placeholder="Email Address" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="text" name="phone" class="form-control" placeholder="Phone / WhatsApp Number" required>
+                        </div>
+                        <div class="mb-3">
+                            <textarea name="message" rows="3" class="form-control" placeholder="Tell us about your bulk requirement..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn w-100 py-2" style="background-color: #E3000F; color: white; font-weight: 600; border-radius: 8px;">
+                            Request Quotation <i class="bi bi-send ms-2"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Contact Info Box -->
+                <div class="bg-white p-4 rounded-4 shadow-sm">
+                    <h5 class="mb-4" style="color: #17385A; font-weight: 600;">Need Immediate Assistance?</h5>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-box me-3 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background-color: rgba(23, 56, 90, 0.1); color: #17385A; font-size: 1.2rem;">
+                            <i class="bi bi-telephone-fill"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 text-muted small">Call Us 24/7</h6>
+                            <a href="tel:+919912300247" class="text-decoration-none" style="color: #17385A; font-weight: 600;">+91 99123 00247</a>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box me-3 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background-color: rgba(227, 0, 15, 0.1); color: #E3000F; font-size: 1.2rem;">
+                            <i class="bi bi-envelope-fill"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 text-muted small">Email Us</h6>
+                            <a href="mailto:eurasiastoneindia@gmail.com" class="text-decoration-none" style="color: #17385A; font-weight: 600; word-break: break-all;">eurasiastoneindia@gmail.com</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Custom CSS for formatting DB Content -->
+<style>
+    .long-desc-content p {
+        margin-bottom: 1.5rem;
+    }
+    .long-desc-content ul {
+        padding-left: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .long-desc-content li {
+        margin-bottom: 0.5rem;
+    }
+</style>
 
 <?php include 'includes/footer.php'; ?>

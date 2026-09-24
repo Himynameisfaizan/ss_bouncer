@@ -1,141 +1,174 @@
 <?php
-include "admin/db-conn.php";
-$pageTitle = "Our Blog & News";
+include ('config/connect.php'); 
+
+$pageTitle = "Blogs"; 
 include 'includes/header.php';
 include 'includes/breadcrumb.php';
 
-// Pagination Configuration
-$limit = 6; // Ek page par 6 blogs show honge
-$page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int) $_GET['page'] : 1;
-if ($page < 1) {
-    $page = 1;
+$limit = 6; 
+$page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+
+$totalQuery = mysqli_query($conn, "SELECT COUNT(*) as total FROM blogs WHERE status = 1");
+$totalRow = mysqli_fetch_assoc($totalQuery);
+$total_blogs = $totalRow['total'];
+
+$grid_total_records = max(0, $total_blogs - 1);
+$total_pages = ceil($grid_total_records / $limit);
+
+$featuredQuery = mysqli_query($conn, "SELECT * FROM blogs WHERE status = 1 ORDER BY created_at DESC LIMIT 1");
+$featuredBlog = mysqli_fetch_assoc($featuredQuery);
+
+$gridQuery = mysqli_query($conn, "SELECT * FROM blogs WHERE status = 1 ORDER BY created_at DESC");
+
+$currentPage = basename($_SERVER['PHP_SELF']);
+
+$seo_meta_query = mysqli_query($conn, "SELECT meta_title, meta_key, meta_desc FROM meta WHERE page_url = '$currentPage'");
+
+if ($seo_meta_query && mysqli_num_rows($seo_meta_query) > 0) {
+    $seo_data = mysqli_fetch_assoc($seo_meta_query);
+    
+    $pageTitle = $seo_data['meta_title'];
+    $meta_keywords = $seo_data['meta_key'];
+    $meta_description = $seo_data['meta_desc'];
+} else {
+    $pageTitle = "Bhagirath Enterprise";
+    $meta_keywords = "export, agricultural products";
+    $meta_description = "Bhagirath Enterprise Export Company.";
 }
 
-// Total published blogs count karna
-$total_records_query = mysqli_query($conn, "SELECT COUNT(id) AS total FROM blogs WHERE status = 'published'"); //
-$total_records_data = mysqli_fetch_assoc($total_records_query);
-$total_records = $total_records_data['total'];
-$total_pages = ceil($total_records / $limit);
-
-// Agar url me page number total pages se jyada ho jaye
-if ($page > $total_pages && $total_pages > 0) {
-    $page = $total_pages;
-}
-
-$offset = ($page - 1) * $limit;
-
-// Current page ke hisaab se blogs fetch karna
-$blogs_query = mysqli_query($conn, "SELECT * FROM blogs WHERE status = 'published' ORDER BY created_at DESC LIMIT $offset, $limit"); //
 ?>
 
-<section class="section-padding bg-light-gray">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($pageTitle); ?></title>
+    <meta name="description" content="<?= htmlspecialchars($meta_description); ?>">
+    <meta name="keywords" content="<?= htmlspecialchars($meta_keywords); ?>">
+    <link rel="icon" href="<?= htmlspecialchars($favicon); ?>" type="image/png">
+</head>
+<body>
+    
+<section class="blog-page-section">
     <div class="container">
-        <div class="text-center mb-5" data-aos="fade-up">
-            <h2 class="section-title">Latest <span>Insights</span></h2>
-            <p class="text-muted">Stay updated with the latest security tips, company news, and industry trends.</p>
-        </div>
-
-        <div class="row g-4">
-            <?php
-            if ($blogs_query && mysqli_num_rows($blogs_query) > 0) {
-                $delay = 100;
-                while ($blog = mysqli_fetch_assoc($blogs_query)) {
-
-                    // Image path handling
-                    $raw_img = $blog['image']; //[cite: 1]
-                    if (!empty($raw_img)) {
-                        if (strpos($raw_img, 'admin/') === 0) {
-                            $img_src = $raw_img;
-                        } elseif (strpos($raw_img, 'uploads/') === 0) {
-                            $img_src = 'admin/' . $raw_img;
-                        } else {
-                            $img_src = 'admin/assets/img/uploads/' . $raw_img;
-                        }
-                    } else {
-                        $img_src = 'assets/images/blog/default.jpg'; // Fallback image
-                    }
-
-                    // Content snippet create karna
-                    // htmlspecialchars_decode aur stripslashes se raw HTML handle hoga aur strip_tags tags remove karega
-                    $clean_text = strip_tags(htmlspecialchars_decode(stripslashes($blog['content']))); //[cite: 1]
-                    $short_desc = (strlen($clean_text) > 110) ? substr($clean_text, 0, 110) . '...' : $clean_text;
-
-                    // Title aur Date formatting
-                    $blog_title = htmlspecialchars($blog['title']); //[cite: 1]
-                    $blog_date = date('M d, Y', strtotime($blog['created_at'])); //[cite: 1]
-                    $author = !empty($blog['author']) ? htmlspecialchars($blog['author']) : 'Admin'; //[cite: 1]
-            
-                    // Blog detail page link
-                    $blog_link = !empty($blog['slug_url']) ? 'blog-details.php?slug=' . urlencode($blog['slug_url']) : 'blog-details.php?id=' . $blog['id']; //[cite: 1]
-                    ?>
-                    <!-- Blog Card -->
-                    <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="<?= $delay; ?>">
-                        <div class="blog-card border-0 h-100 d-flex flex-column shadow-sm">
-                            <a href="<?= $blog_link; ?>" class="d-block overflow-hidden">
-                                <img src="<?= $img_src; ?>" alt="<?= $blog_title; ?>" class="blog-image w-100"
-                                    style="object-fit: cover; height: 250px;">
-                            </a>
-                            <div class="blog-content d-flex flex-column flex-grow-1 bg-white p-4">
-                                <div class="blog-meta mb-3 text-muted small d-flex gap-3">
-                                    <span><i class="fas fa-calendar-alt text-primary-custom"></i> <?= $blog_date; ?></span>
-                                    <span><i class="fas fa-user text-primary-custom"></i> <?= $author; ?></span>
-                                </div>
-                                <h5 class="fw-bold mb-3">
-                                    <a href="<?= $blog_link; ?>" class="text-dark text-decoration-none"><?= $blog_title; ?></a>
-                                </h5>
-                                <p class="text-muted small mb-4 flex-grow-1"><?= $short_desc; ?></p>
-                                <div class="mt-auto">
-                                    <a href="<?= $blog_link; ?>" class="text-primary-custom fw-bold text-decoration-none">
-                                        Read More <i class="fas fa-arrow-right ms-1"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+<!--         
+        <?#php if($featuredBlog): 
+            $f_date = date('M d, Y', strtotime($featuredBlog['created_at']));
+            $f_excerpt = mb_substr(strip_tags($featuredBlog['description']), 0, 180) . '...';
+            // Checking if image exists, else fallback
+            $f_img = !empty($featuredBlog['image']) ? 'admin/assets/img/uploads/blogs/' . $featuredBlog['image'] : 'https://images.unsplash.com/photo-1606914501449-5a96b6ce24ca?q=80&w=1200';
+        ?>
+        <div class="row reveal">
+            <div class="col-12">
+                <div class="featured-blog">
+                    <div class="featured-img-wrapper">
+                        <span class="featured-category">Featured</span>
+                        <a href="blog-details.php?slug=<?php echo $featuredBlog['slug']; ?>">
+                            <img src="<?php echo $f_img; ?>" alt="<?php echo $featuredBlog['title']; ?>">
+                        </a>
                     </div>
-                    <?php
-                    $delay = ($delay >= 300) ? 100 : $delay + 100;
-                }
-            } else {
-                ?>
-                <div class="col-12 text-center py-5">
-                    <p class="text-muted">No blogs published yet. Check back later!</p>
-                </div>
-            <?php } ?>
-        </div>
-
-        <!-- Pagination -->
-        <?php if ($total_pages > 1): ?>
-            <div class="row mt-5" data-aos="fade-up">
-                <div class="col-12">
-                    <ul class="pagination pagination-custom justify-content-center">
-
-                        <!-- Previous Button -->
-                        <li class="page-item <?= ($page <= 1) ? 'disabled' : ''; ?>">
-                            <a class="page-link" href="<?= ($page <= 1) ? '#' : '?page=' . ($page - 1); ?>">
-                                <i class="fas fa-angle-left"></i> Prev
-                            </a>
-                        </li>
-
-                        <!-- Page Numbers -->
-                        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                            <li class="page-item <?= ($page == $i) ? 'active' : ''; ?>">
-                                <a class="page-link" href="?page=<?= $i; ?>"><?= $i; ?></a>
-                            </li>
-                        <?php endfor; ?>
-
-                        <!-- Next Button -->
-                        <li class="page-item <?= ($page >= $total_pages) ? 'disabled' : ''; ?>">
-                            <a class="page-link" href="<?= ($page >= $total_pages) ? '#' : '?page=' . ($page + 1); ?>">
-                                Next <i class="fas fa-angle-right"></i>
-                            </a>
-                        </li>
-
-                    </ul>
+                    <div class="featured-content">
+                        <div class="featured-meta">
+                            <i class="fa-regular fa-calendar-days"></i> <?php echo $f_date; ?>
+                            <i class="fa-regular fa-user"></i> <?php echo $featuredBlog['author']; ?>
+                        </div>
+                        <a href="blog-details.php?slug=<?php echo $featuredBlog['slug']; ?>" class="featured-title">
+                            <?php echo $featuredBlog['title']; ?>
+                        </a>
+                        <p class="featured-excerpt">
+                            <?php echo $f_excerpt; ?>
+                        </p>
+                        <a href="blog-details.php?slug=<?php echo $featuredBlog['slug']; ?>" class="btn-theme" style="background: var(--primary-green); color: white; padding: 12px 30px; border-radius: 30px; text-decoration: none; font-weight: 600; align-self: flex-start; transition: all 0.3s;" onmouseover="this.style.background='var(--accent-orange)'" onmouseout="this.style.background='var(--primary-green)'">Read Full Article <i class="fa-solid fa-arrow-right ms-2"></i></a>
+                    </div>
                 </div>
             </div>
+        </div>
+        <#?php endif; ?> -->
+
+        <!-- BLOG GRID -->
+        <div class="row g-4 mt-2">
+            <?php 
+            if(mysqli_num_rows($gridQuery) > 0):
+                while($blog = mysqli_fetch_assoc($gridQuery)): 
+                    $date = date('M d, Y', strtotime($blog['created_at']));
+                    $excerpt = mb_substr(strip_tags($blog['description']), 0, 100) . '...';
+                    $img = !empty($blog['image']) ? 'admin/assets/img/uploads/blogs/' . $blog['image'] : 'https://images.unsplash.com/photo-1615486171448-4228965f7c32?q=80&w=800';
+            ?>
+            <div class="col-lg-4 col-md-6 reveal">
+                <div class="blog-card">
+                    <div class="blog-img-wrapper">
+                        <span class="featured-category" style="top: 15px; left: 15px; font-size: 10px; padding: 4px 12px;">News</span>
+                        <a href="blog-details.php?slug=<?php echo $blog['slug']; ?>">
+                            <img src="<?php echo $img; ?>" alt="<?php echo $blog['title']; ?>">
+                        </a>
+                    </div>
+                    <div class="blog-content">
+                        <div class="featured-meta" style="font-size: 13px;">
+                            <i class="fa-regular fa-calendar-days"></i> <?php echo $date; ?>
+                            <i class="fa-regular fa-user"></i> <?php echo $blog['author']; ?>
+                        </div>
+                        <a href="blog-details.php?slug=<?php echo $blog['slug']; ?>" class="blog-title"><?php echo $blog['title']; ?></a>
+                        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;"><?php echo $excerpt; ?></p>
+                        <a href="blog-details.php?slug=<?php echo $blog['slug']; ?>" class="read-more-btn">Read More <i class="fa-solid fa-arrow-right-long"></i></a>
+                    </div>
+                </div>
+            </div>
+            <?php 
+                endwhile; 
+            else:
+                // Show this if no other blogs exist
+                if(!$featuredBlog) {
+                    echo "<div class='col-12 text-center py-5'><h3 style='color: var(--text-muted);'>No Articles Found</h3></div>";
+                }
+            endif;
+            ?>
+        </div>
+
+        <!-- DYNAMIC PAGINATION -->
+        <?php if($total_pages > 1): ?>
+        <div class="row reveal mt-5">
+            <div class="col-12">
+                <ul class="k2k-pagination">
+                    <!-- Prev Button -->
+                    <?php if($page > 1): ?>
+                        <li class="prev"><a href="?page=<?php echo ($page-1); ?>"><i class="fa-solid fa-arrow-left me-2"></i> Prev</a></li>
+                    <?php endif; ?>
+
+                    <!-- Page Numbers -->
+                    <?php for($i = 1; $i <= $total_pages; $i++): ?>
+                        <li class="<?php echo ($page == $i) ? 'active' : ''; ?>">
+                            <a href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                        </li>
+                    <?php endfor; ?>
+
+                    <!-- Next Button -->
+                    <?php if($page < $total_pages): ?>
+                        <li class="next"><a href="?page=<?php echo ($page+1); ?>">Next <i class="fa-solid fa-arrow-right ms-2"></i></a></li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+        </div>
         <?php endif; ?>
 
     </div>
 </section>
 
+<!-- Scroll Animation Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const reveals = document.querySelectorAll(".reveal");
+        const revealOnScroll = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("active");
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        reveals.forEach(reveal => revealOnScroll.observe(reveal));
+    });
+</script>
+
+<!-- Include Footer -->
 <?php include 'includes/footer.php'; ?>

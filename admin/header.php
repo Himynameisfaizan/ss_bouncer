@@ -31,10 +31,24 @@ if (!isset($_SESSION['admin_logged_in'])) {
             <ul>
                 <li><a href="home-items.php">Add Logo</a></li>
                 <li><a href="add-banner.php">Add Banners</a></li>
+                <li><a href="about_us.php">Add About</a></li>
+                <li><a href="add-about-us-section.php"> About sections</a></li>
+                <li><a href="manage-meta.php"> Manage Meta</a></li>
+                 <li><a href="add_contact.php"><span>Contact Details</span>
+            </a>
+        </li>
             </ul>
         </li>
 
-        <!-- <li>
+         <!-- <li>
+            <a class="has-arrow" href="#"><i class="fas fa-info-circle" style="color: #d35400;"></i> <span>About Us
+                    Page</span></a>
+            <ul>
+                <!-- <li><a href="about_us.php">Add About</a></li> 
+            </ul>
+        </li> -->
+
+        <li>
             <a class="has-arrow" href="#"><i class="fas fa-layer-group" style="color: #2ecc71;"></i>
                 <span>Categories</span></a>
             <ul>
@@ -43,17 +57,17 @@ if (!isset($_SESSION['admin_logged_in'])) {
                 <li><a href="add-sub-category.php">Add Sub Category</a></li>
                 <li><a href="view-sub-categories.php">View Sub Categories</a></li>
             </ul>
-        </li> -->
+        </li>
 
-        <!-- <li>
+        <li>
             <a class="has-arrow" href="#"><i class="fas fa-box-open" style="color: #f39c12;"></i>
                 <span>Products</span></a>
             <ul>
                 <li><a href="add-products.php">Add Products</a></li>
                 <li><a href="show-products.php">Show Products</a></li>
-                <li><a href="show-products-review.php">Products Reviews</a></li> 
+                <li><a href="show-products-review.php">Products Reviews</a></li>
             </ul>
-        </li> -->
+        </li>
 
         <li>
             <a class="has-arrow" href="#"><i class="fas fa-fire" style="color: #ff6b6b;"></i><span>Service</span></a>
@@ -64,13 +78,14 @@ if (!isset($_SESSION['admin_logged_in'])) {
         </li>
 
         <li>
-            <a class="has-arrow" href="#"><i class="fas fa-blog" style="color: #9b59b6;"></i> <span>Blogs &
-                    News</span></a>
+            <a class="has-arrow" href="#"><i class="fas fa-blog" style="color: #9b59b6;"></i><span>Blogs</span></a>
             <ul>
+                <li><a href="blog.php">Show Blogs</a></li>
                 <li><a href="add-blog.php">Add Blog</a></li>
-                <li><a href="view-all-blog.php">View Blogs</a></li>
             </ul>
         </li>
+
+      
 
         <!-- <li>
             <a class="has-arrow" href="#"><i class="fas fa-award" style="color: #1abc9c;"></i> <span>Country Export</span></a>
@@ -80,33 +95,24 @@ if (!isset($_SESSION['admin_logged_in'])) {
             </ul>
         </li> -->
 
+
         <!-- <li>
-            <a class="has-arrow" href="#"><i class="fas fa-info-circle" style="color: #d35400;"></i> <span>About Us
-                    Page</span></a>
-            <ul>
-                <li><a href="about_us.php">Add About</a></li>
-                <li><a href="add-about-us-section.php">Add About sections</a></li>
-            </ul>
-        </li> -->
-
-
-        <li>
             <a class="has-arrow" href="#"><i class="fas fa-envelope" style="color: #27ae60;"></i> <span>Contact
                     Page</span></a>
             <ul>
                 <li><a href="add_contact.php">Edit Contact Info</a></li>
-                <!-- <li><a href="new-leads.php">Inquiries</a></li> -->
+                <li><a href="new-leads.php">Inquiries</a></li>
             </ul>
-        </li>
+        </li> -->
 
         <!-- <li>
             <a href="about_us.php">
                 <i class="fas fa-info-circle" style="color: #d35400;"></i>
                 <span>About Us</span>
             </a>
-        </li>
+        </li> -->
 
-        <li>
+        <!-- <li>
             <a href="add_contact.php">
                 <i class="fa-regular fa-address-book" style="color: #e4d72b;"></i>
                 <span>Contact Details</span>
@@ -128,13 +134,20 @@ if (!isset($_SESSION['admin_logged_in'])) {
         </li>
 
         <li>
+            <a href="brands.php">
+                <i class="fas fa-images" style="color: #8e44ad;"></i>
+                <span>Brands</span>
+            </a>
+        </li>
+
+        <!-- <li>
             <a class="has-arrow" href="#"><i class="fas fa-quote-left" style="color: #16a085;"></i>
                 <span>Testimonials</span></a>
             <ul>
                 <li><a href="add-testimonial.php">Add Testimonials</a></li>
                 <li><a href="view-testimonials.php">View Testimonials</a></li>
             </ul>
-        </li>
+        </li> -->
 
         <!-- <li>
             <a class="has-arrow" href="#"><i class="fas fa-users" style="color: #c0392b;"></i> <span>Customers</span></a>

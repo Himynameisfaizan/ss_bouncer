@@ -1,5 +1,2 @@
-.env
-vendor
-admin/.htaccess
-admin/assets/New folder
 admin/assets/vendors
+.htaccess

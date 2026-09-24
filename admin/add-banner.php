@@ -22,6 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
     $start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
     $end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
     
+    // SEO Meta Inputs
+    $meta_title = trim($_POST['meta_title'] ?? '');
+    $meta_key = trim($_POST['meta_key'] ?? '');
+    $meta_desc = trim($_POST['meta_desc'] ?? '');
+    
     // Validate required fields
     if (empty($title)) {
         $errors[] = "Title is required.";
@@ -67,12 +72,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
         // If no errors, proceed with upload and database insert
         if (empty($errors)) {
             if (move_uploaded_file($_FILES["banner"]["tmp_name"], $target_file)) {
-                // Insert into database
+                // Insert into database including SEO columns
                 $stmt = $conn->prepare("INSERT INTO banners 
-                    (banner_path, title, description, link_url, status, display_order, uploaded_at, start_date, end_date) 
-                    VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?)");
+                    (banner_path, title, description, link_url, status, display_order, uploaded_at, start_date, end_date, meta_title, meta_key, meta_desc) 
+                    VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)");
                 
-                $stmt->bind_param("ssssiiss", 
+                $stmt->bind_param("ssssiissSSS", 
                     $target_file, 
                     $title, 
                     $description, 
@@ -80,7 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                     $status, 
                     $display_order, 
                     $start_date, 
-                    $end_date
+                    $end_date,
+                    $meta_title,
+                    $meta_key,
+                    $meta_desc
                 );
                 
                 if ($stmt->execute()) {
@@ -308,6 +316,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                                                 <div class="mb-3">
                                                     <label for="end_date" class="form-label">End Date (optional)</label>
                                                     <input type="date" class="form-control" id="end_date" name="end_date">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- SEO Fields Section Added -->
+                                        <div class="row mt-3 border-top pt-3">
+                                            <div class="col-12">
+                                                <h5 class="text-primary mb-3">SEO Meta Configuration</h5>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="meta_title" class="form-label">Meta Title</label>
+                                                    <input type="text" class="form-control" id="meta_title" name="meta_title" placeholder="SEO Title for search engines">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="meta_key" class="form-label">Meta Keywords</label>
+                                                    <input type="text" class="form-control" id="meta_key" name="meta_key" placeholder="keyword1, keyword2, keyword3">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="meta_desc" class="form-label">Meta Description</label>
+                                                    <textarea class="form-control" id="meta_desc" name="meta_desc" rows="4" placeholder="Brief summary for Google search results (150-160 characters)"></textarea>
                                                 </div>
                                             </div>
                                         </div>
