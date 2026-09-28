@@ -44,6 +44,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/include.css">
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/about.css">
+    <link rel="stylesheet" href="assets/css/service.css">
 </head>
 <body>
 
@@ -121,7 +123,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         
                         <!-- Services Dropdown (Dynamic) -->
                         <li class="nav-item dropdown custom-dropdown">
-                            <a class="nav-link dropdown-toggle <?= ($current_page == 'services.php' || $current_page == 'service_details.php') ? 'active' : '' ?>" href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle <?= ($current_page == 'services.php' || $current_page == 'service_details.php') ? 'active' : '' ?>" href="services.php" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 Services
                             </a>
                             <ul class="dropdown-menu shadow-sm" aria-labelledby="servicesDropdown">

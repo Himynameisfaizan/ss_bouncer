@@ -1,98 +1,125 @@
 <?php
-include 'config/connect.php';
+require_once 'config/connect.php';
 
+// Fetch SEO Metadata for About Page[cite: 2]
 $currentPage = basename($_SERVER['PHP_SELF']);
+$seo_meta_query = $conn->query("SELECT meta_title, meta_key, meta_desc FROM meta WHERE page_url = 'about.php'");
+$seo_data = ($seo_meta_query && $seo_meta_query->num_rows > 0) ? $seo_meta_query->fetch_assoc() : null;
 
-$seo_meta_query = mysqli_query($conn, "SELECT meta_title, meta_key, meta_desc FROM meta WHERE page_url = '$currentPage'");
+$pageTitle = $seo_data['meta_title'] ?? "About Us | SS Bouncers";
+$meta_keywords = $seo_data['meta_key'] ?? "security services, bouncers, security agency";
+$meta_description = $seo_data['meta_desc'] ?? "Learn more about SS Bouncers, our history, mission, and commitment to providing top-tier security.";
 
-if ($seo_meta_query && mysqli_num_rows($seo_meta_query) > 0) {
-    $seo_data = mysqli_fetch_assoc($seo_meta_query);
-    
-    $pageTitle = $seo_data['meta_title'];
-    $meta_keywords = $seo_data['meta_key'];
-    $meta_description = $seo_data['meta_desc'];
-} else {
-    $pageTitle = "Bhagirath Enterprise";
-    $meta_keywords = "export, agricultural products";
-    $meta_description = "Bhagirath Enterprise Export Company.";
-}
+// Fetch About Us Content from Database[cite: 2]
+$about_query = $conn->query("SELECT * FROM about_us LIMIT 1");
+$about_data = ($about_query && $about_query->num_rows > 0) ? $about_query->fetch_assoc() : null;
 
-$brands_array = [];
-if (isset($conn)) {
-    $brands_res = mysqli_query($conn, "SELECT * FROM brands ORDER BY id DESC");
-    if ($brands_res && mysqli_num_rows($brands_res) > 0) {
-        while ($brand = mysqli_fetch_assoc($brands_res)) {
-            $brands_array[] = $brand;
-        }
-    }
-}
+// Include Header
+include 'includes/header.php'; 
+include 'includes/breadcrumb.php'; 
+
 ?>
 
-<?php include 'includes/header.php'; ?>
-
-<?php include 'includes/breadcrumb.php'; ?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-      <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle); ?></title>
-    <meta name="description" content="<?= htmlspecialchars($meta_description); ?>">
-    <meta name="keywords" content="<?= htmlspecialchars($meta_keywords); ?>">
-    <link rel="icon" href="<?= htmlspecialchars($favicon); ?>" type="image/png">
-</head>
-<body>
-    
-<!-- 1. ABOUT COMPANY SECTION (SEO H1 Tag applied here) -->
-<section class="inner-about section-padding">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6 reveal mb-4 mb-lg-0">
-                <div class="about-image-collage position-relative">
-                    <img src="https://images.unsplash.com/photo-1716816211590-c15a328a5ff0?w=500&auto=format&fit=crop&q=60" alt="Bhagirath Enterprise Export Facility" class="about-img-1 w-100 rounded shadow-lg" style="object-fit: cover; height: 350px;">
-                    <img src="https://images.unsplash.com/photo-1596040033229-a9821ebd058d?q=80&w=600&auto=format&fit=crop" alt="Premium Indian Spices and Dry Fruits" class="about-img-2 position-absolute border border-white border-5 rounded shadow" style="width: 250px; bottom: -30px; right: -20px;">
+<!-- ==================== DYNAMIC ABOUT SECTION ==================== -->
+<section class="inner-about section-padding py-5 bg-white">
+    <div class="container py-5">
+        <div class="row align-items-center gy-5">
+            <!-- Image Collage (Modern Style) -->
+            <div class="col-lg-6 reveal">
+                <div class="about-image-collage position-relative pe-lg-4 pb-lg-4">
+                    <?php if($about_data && !empty($about_data['image_url'])): ?>
+                        <img src="<?= $site ?>admin/<?= htmlspecialchars($about_data['image_url']) ?>" alt="<?= htmlspecialchars($about_data['title']) ?>" class="w-100 rounded-4 shadow-lg object-fit-cover" style="height: 450px;">
+                    <?php else: ?>
+                        <img src="assets/images/banner/1.jpg" alt="Security Team" class="w-100 rounded-4 shadow-lg object-fit-cover" style="height: 450px;">
+                    <?php endif; ?>
+                    
+                    <!-- Floating Accent Element -->
+                    <div class="experience-float bg-primary-dark text-white p-4 rounded-4 shadow-lg position-absolute bottom-0 right-0" style="right: -20px; bottom: -20px; border-bottom: 4px solid var(--secondary-color);">
+                        <h2 class="display-5 fw-bold text-secondary-accent mb-0">150+</h2>
+                        <span class="fs-6 text-uppercase tracking-wider">Expert Guards</span>
+                    </div>
                 </div>
             </div>
-            <div class="col-lg-6 ps-lg-5 reveal mt-5 mt-lg-0">
-                <span class="sec-subtitle text-uppercase fw-bold" style="color: #E3000F; letter-spacing: 1px; font-size: 14px;">About Bhagirath Enterprise</span>
-                <h1 class="sec-title mb-4" style="color: #17385A; font-weight: 700; font-size: 2.2rem; line-height: 1.3;">Exporting the Finest Agricultural Wealth of India to the World.</h1>
-                <p class="about-desc mb-3" style="color: #555; line-height: 1.7;">
-                    <strong>Bhagirath Enterprise</strong> has established itself as a premier global exporter of high-quality agricultural commodities. Operating from the heart of Delhi, India, we bridge the gap between India's rich, fertile farms and international markets, delivering excellence in every shipment.
-                </p>
-                <p class="about-desc mb-4" style="color: #555; line-height: 1.7;">
-                    Specializing in the export of premium <strong>Whole Spices, Dry Fruits,</strong> and authentic agricultural products, we ensure that our global clientele receives 100% pure, unadulterated, and export-grade materials. Our stringent quality control, hygienic processing, and direct-from-farm sourcing make us a trusted partner in the international food trade.
-                </p>
+            
+            <!-- Dynamic Content -->
+            <div class="col-lg-6 ps-lg-5 reveal">
+                <span class="sub-heading text-secondary-accent fw-bold text-uppercase tracking-wider mb-2 d-block">Who We Are</span>
+                <h2 class="main-heading text-primary-dark fw-bold mb-4" style="font-size: 2.5rem;">
+                    <?= $about_data ? htmlspecialchars($about_data['title']) : 'Premium Security Services You Can Trust.' ?>
+                </h2>
+                
+                <div class="about-desc text-muted" style="line-height: 1.8; font-size: 1.05rem;">
+                    <?php 
+                        if($about_data && !empty($about_data['content'])) {
+                            echo $about_data['content']; // Outputting raw HTML since DB contains HTML tags[cite: 2]
+                        } else {
+                            echo "<p>We are a premier security agency specializing in providing highly trained and professional security personnel for various sectors including corporate offices, industrial warehouses, educational institutes, and multispecialty hospitals.</p>";
+                        }
+                    ?>
+                </div>
+                
+                <div class="d-flex align-items-center mt-4">
+                    <img src="assets/images/signature.png" alt="Director Signature" height="50" class="opacity-75">
+                    <div class="ms-3 border-start ps-3 border-2">
+                        <h6 class="mb-0 text-primary-dark fw-bold">Mr. Shiraj Shaikh</h6>
+                        <small class="text-muted">Managing Director, SS Bouncers</small>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- 2. MISSION & VISION SECTION -->
-<section class="mv-section section-padding" style="background-color: #f8f9fa;">
-    <div class="container">
+<!-- ==================== CORE PRINCIPLES (STATIC FROM DESIGN) ==================== -->
+<section class="core-principles-section py-5 bg-light-custom">
+    <div class="container py-5">
+        <div class="row justify-content-center text-center mb-5 reveal">
+            <div class="col-lg-8">
+                <span class="sub-heading text-secondary-accent fw-bold text-uppercase tracking-wider">Our Core Principles</span>
+                <h2 class="main-heading text-primary-dark fw-bold mt-2">The foundation of our commitment</h2>
+                <p class="text-muted mt-3">To your safety, security, and peace of mind.</p>
+            </div>
+        </div>
+
         <div class="row g-4">
-            <!-- Mission Card -->
-            <div class="col-lg-6 reveal">
-                <div class="mv-card bg-white p-5 rounded-4 shadow-sm h-100" style="border-top: 4px solid #E3000F;">
-                    <div class="icon-wrap mb-4" style="width: 60px; height: 60px; background: rgba(227,0,15,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <i class="fa-solid fa-bullseye mv-icon" style="font-size: 24px; color: #E3000F;"></i>
+            <!-- Mission -->
+            <div class="col-lg-4 col-md-6 reveal">
+                <div class="principle-card bg-primary-dark text-center p-5 rounded-4 shadow-sm h-100 position-relative overflow-hidden">
+                    <div class="principle-hover-bg"></div>
+                    <div class="icon-wrap mb-4 d-inline-flex align-items-center justify-content-center rounded-circle border border-secondary-accent" style="width: 80px; height: 80px;">
+                        <i class="fa-solid fa-bullseye text-secondary-accent fs-1"></i>
                     </div>
-                    <h3 class="mv-title" style="color: #17385A; font-weight: 700; margin-bottom: 15px;">Our Mission</h3>
-                    <p class="about-desc mb-0" style="color: #666; line-height: 1.6;">
-                        To consistently deliver superior quality agricultural products to global markets while maintaining ethical sourcing practices. We aim to empower local Indian farmers and provide international consumers with safe, hygienic, and authentic flavors.
+                    <h3 class="text-white fw-bold mb-3 position-relative z-2">Our Mission</h3>
+                    <p class="text-white-50 mb-0 position-relative z-2" style="line-height: 1.6;">
+                        To deliver uncompromised security solutions through continuous training, strict verification processes, and leveraging modern security protocols to ensure complete client satisfaction.
                     </p>
                 </div>
             </div>
-            <!-- Vision Card -->
-            <div class="col-lg-6 reveal">
-                <div class="mv-card bg-white p-5 rounded-4 shadow-sm h-100" style="border-top: 4px solid #17385A;">
-                    <div class="icon-wrap mb-4" style="width: 60px; height: 60px; background: rgba(23,56,90,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <i class="fa-solid fa-eye mv-icon" style="font-size: 24px; color: #17385A;"></i>
+            
+            <!-- Vision -->
+            <div class="col-lg-4 col-md-6 reveal">
+                <div class="principle-card bg-primary-dark text-center p-5 rounded-4 shadow-sm h-100 position-relative overflow-hidden">
+                    <div class="principle-hover-bg"></div>
+                    <div class="icon-wrap mb-4 d-inline-flex align-items-center justify-content-center rounded-circle border border-secondary-accent" style="width: 80px; height: 80px;">
+                        <i class="fa-solid fa-eye text-secondary-accent fs-1"></i>
                     </div>
-                    <h3 class="mv-title" style="color: #17385A; font-weight: 700; margin-bottom: 15px;">Our Vision</h3>
-                    <p class="about-desc mb-0" style="color: #666; line-height: 1.6;">
-                        To be the world's most reliable and sustainable partner in the agricultural export industry, recognized globally for our uncompromising quality standards, competitive pricing, and commitment to global food safety.
+                    <h3 class="text-white fw-bold mb-3 position-relative z-2">Our Vision</h3>
+                    <p class="text-white-50 mb-0 position-relative z-2" style="line-height: 1.6;">
+                        To be recognized as the most trusted and reliable security agency, setting industry benchmarks for excellence, integrity, and proactive risk management.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Values -->
+            <div class="col-lg-4 col-md-6 reveal">
+                <div class="principle-card bg-primary-dark text-center p-5 rounded-4 shadow-sm h-100 position-relative overflow-hidden">
+                    <div class="principle-hover-bg"></div>
+                    <div class="icon-wrap mb-4 d-inline-flex align-items-center justify-content-center rounded-circle border border-secondary-accent" style="width: 80px; height: 80px;">
+                        <i class="fa-solid fa-gem text-secondary-accent fs-1"></i>
+                    </div>
+                    <h3 class="text-white fw-bold mb-3 position-relative z-2">Our Values</h3>
+                    <p class="text-white-50 mb-0 position-relative z-2" style="line-height: 1.6;">
+                        Integrity, vigilance, and helpfulness are the core pillars of our agency. We operate with absolute transparency and treat our clients' safety as our highest personal responsibility.
                     </p>
                 </div>
             </div>
@@ -100,172 +127,64 @@ if (isset($conn)) {
     </div>
 </section>
 
-<!-- 3. WHY CHOOSE US -->
-<section class="inner-wcu section-padding">
-    <div class="container">
+<!-- ==================== HOW WE WORK ==================== -->
+<section class="process-section py-5">
+    <div class="container py-5">
         <div class="row text-center mb-5 reveal">
             <div class="col-12">
-                <span class="sec-subtitle text-uppercase fw-bold" style="color: #E3000F; letter-spacing: 1px; font-size: 14px;">The Bhagirath Enterprise Advantage</span>
-                <h2 class="sec-title" style="color: #17385A; font-weight: 700;">Why Partner With Us?</h2>
+                <span class="sub-heading text-secondary-accent fw-bold text-uppercase tracking-wider">Security Process</span>
+                <h2 class="main-heading text-primary-dark fw-bold mt-2">How We Secure Your Premises</h2>
             </div>
         </div>
 
-        <div class="row align-items-center">
-            <!-- Left Side Points -->
-            <div class="col-lg-4 reveal">
-                <div class="wcu-list-item d-flex align-items-start mb-4">
-                    <div class="wcu-list-icon me-3 mt-1" style="color: #E3000F; font-size: 1.5rem;"><i class="fa-solid fa-leaf"></i></div>
-                    <div class="wcu-list-content">
-                        <h4 style="color: #17385A; font-weight: 600; font-size: 1.1rem;">Farm-Fresh Sourcing</h4>
-                        <p class="small text-muted">We procure our dry fruits and spices directly from the most fertile and trusted agricultural regions.</p>
+        <div class="row position-relative reveal z-1">
+            <!-- Connecting Line -->
+            <div class="process-line d-none d-lg-block"></div>
+            
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0 text-center">
+                <div class="process-step-box position-relative z-2">
+                    <div class="process-icon-box bg-white shadow mx-auto mb-4 d-flex align-items-center justify-content-center rounded-circle" style="width: 90px; height: 90px; border: 3px solid var(--secondary-color);">
+                        <i class="fa-solid fa-clipboard-check text-primary-dark fs-2"></i>
                     </div>
-                </div>
-                <div class="wcu-list-item d-flex align-items-start mb-4">
-                    <div class="wcu-list-icon me-3 mt-1" style="color: #E3000F; font-size: 1.5rem;"><i class="fa-solid fa-certificate"></i></div>
-                    <div class="wcu-list-content">
-                        <h4 style="color: #17385A; font-weight: 600; font-size: 1.1rem;">Certified Quality</h4>
-                        <p class="small text-muted">Strict adherence to global food safety standards, fully compliant with international export boards.</p>
-                    </div>
+                    <h4 class="fw-bold text-primary-dark">1. Site Assessment</h4>
+                    <p class="text-muted small">We analyze your property to identify vulnerabilities and security needs.</p>
                 </div>
             </div>
-
-            <!-- Center Image -->
-            <div class="col-lg-4 text-center reveal mb-4 mb-lg-0">
-                <div style="padding: 15px; border: 2px dashed #E3000F; border-radius: 50%; display: inline-block;">
-                    <img src="https://images.unsplash.com/photo-1493946243886-c4d6f4614ff3?q=80&w=600&auto=format&fit=crop" alt="Global Export" style="width: 100%; max-width: 300px; border-radius: 50%; object-fit: cover; aspect-ratio: 1/1;">
+            
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0 text-center">
+                <div class="process-step-box position-relative z-2">
+                    <div class="process-icon-box bg-white shadow mx-auto mb-4 d-flex align-items-center justify-content-center rounded-circle" style="width: 90px; height: 90px; border: 3px solid var(--secondary-color);">
+                        <i class="fa-solid fa-user-shield text-primary-dark fs-2"></i>
+                    </div>
+                    <h4 class="fw-bold text-primary-dark">2. Custom Strategy</h4>
+                    <p class="text-muted small">Developing a tailored security plan with the right mix of personnel.</p>
                 </div>
             </div>
-
-            <!-- Right Side Points -->
-            <div class="col-lg-4 reveal">
-                <div class="wcu-list-item d-flex align-items-start mb-4">
-                    <div class="wcu-list-icon me-3 mt-1" style="color: #E3000F; font-size: 1.5rem;"><i class="fa-solid fa-box-open"></i></div>
-                    <div class="wcu-list-content">
-                        <h4 style="color: #17385A; font-weight: 600; font-size: 1.1rem;">Premium Export Packaging</h4>
-                        <p class="small text-muted">Moisture-proof, container-safe packaging that preserves aroma, taste, and product integrity during transit.</p>
+            
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0 text-center">
+                <div class="process-step-box position-relative z-2">
+                    <div class="process-icon-box bg-white shadow mx-auto mb-4 d-flex align-items-center justify-content-center rounded-circle" style="width: 90px; height: 90px; border: 3px solid var(--secondary-color);">
+                        <i class="fa-solid fa-users-gear text-primary-dark fs-2"></i>
                     </div>
-                </div>
-                <div class="wcu-list-item d-flex align-items-start mb-4">
-                    <div class="wcu-list-icon me-3 mt-1" style="color: #E3000F; font-size: 1.5rem;"><i class="fa-solid fa-ship"></i></div>
-                    <div class="wcu-list-content">
-                        <h4 style="color: #17385A; font-weight: 600; font-size: 1.1rem;">Global Logistics</h4>
-                        <p class="small text-muted">A robust supply chain and freight network ensuring safe, hassle-free, and timely delivery across borders.</p>
-                    </div>
+                    <h4 class="fw-bold text-primary-dark">3. Guard Deployment</h4>
+                    <p class="text-muted small">Deploying highly trained, verified, and briefed security guards.</p>
                 </div>
             </div>
-        </div>
-    </div>
-</section>
-
-<!-- 4. Dynamic Brands / Clients Slider Section -->
-<section class="brands-slider-section py-5" style="background-color: #f8f9fa; border-top: 1px solid #eaeaea;">
-    <div class="container">
-        <h2 class="text-center mb-5" style="color: #17385A; font-weight: 700; font-size: 1.5rem; letter-spacing: 1px;">OUR TRUSTED CLIENTS & PARTNERS</h2>
-        
-        <div class="brand-slider-container">
-            <div class="brand-slide-track">
-                <?php if(!empty($brands_array)): ?>
-                    <?php 
-                    for($loop = 0; $loop < 2; $loop++):
-                        foreach($brands_array as $brand):
-                            $brandLogo = !empty($brand['logo_path']) ? $brand['logo_path'] : '';
-                    ?>
-                    <div class="brand-slide">
-                        <?php if(!empty($brandLogo)): ?>
-                            <img src="admin/<?= htmlspecialchars($brandLogo) ?>" alt="<?= htmlspecialchars($brand['brand_name']) ?>" title="<?= htmlspecialchars($brand['brand_name']) ?>">
-                        <?php else: ?>
-                            <span class="fw-bold text-dark"><?= htmlspecialchars($brand['brand_name']) ?></span>
-                        <?php endif; ?>
+            
+            <div class="col-lg-3 col-md-6 text-center">
+                <div class="process-step-box position-relative z-2">
+                    <div class="process-icon-box bg-white shadow mx-auto mb-4 d-flex align-items-center justify-content-center rounded-circle" style="width: 90px; height: 90px; border: 3px solid var(--secondary-color);">
+                        <i class="fa-solid fa-headset text-primary-dark fs-2"></i>
                     </div>
-                    <?php 
-                        endforeach; 
-                    endfor; 
-                    ?>
-                <?php else: ?>
-                    <div class="brand-slide"><h4 class="brand-logo" style="color: #999;">FSSAI</h4></div>
-                    <div class="brand-slide"><h4 class="brand-logo" style="color: #999;">APEDA</h4></div>
-                    <div class="brand-slide"><h4 class="brand-logo" style="color: #999;">SPICES BOARD</h4></div>
-                <?php endif; ?>
+                    <h4 class="fw-bold text-primary-dark">4. 24/7 Monitoring</h4>
+                    <p class="text-muted small">Continuous supervision and rapid response support round the clock.</p>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- 5. HOW WE WORK (WORKING PROCESS) -->
-<section class="process-section">
-    <div class="container">
-        <div class="row text-center mb-4 reveal">
-            <div class="col-12">
-                <span class="sec-subtitle" style="color: #ffffff;">Our Supply Chain</span>
-                <h2 class="sec-title" style="color: #ffffff;">The Export Process</h2>
-            </div>
-        </div>
-
-        <div class="process-grid reveal">
-            <!-- Step 1 -->
-            <div class="process-step">
-                <div class="process-icon"><i class="fa-solid fa-tractor"></i></div>
-                <h4>1. Ethical Sourcing</h4>
-                <p>Procuring premium raw materials straight from certified farmers.</p>
-            </div>
-            <!-- Step 2 -->
-            <div class="process-step">
-                <div class="process-icon"><i class="fa-solid fa-gears"></i></div>
-                <h4>2. Processing & Grading</h4>
-                <p>Hygienic sorting, cleaning, and processing in our modern facilities.</p>
-            </div>
-            <!-- Step 3 -->
-            <div class="process-step">
-                <div class="process-icon"><i class="fa-solid fa-microscope"></i></div>
-                <h4>3. Quality Assurance</h4>
-                <p>Rigorous lab testing to ensure export-grade purity and compliance.</p>
-            </div>
-            <!-- Step 4 -->
-            <div class="process-step">
-                <div class="process-icon"><i class="fa-solid fa-globe"></i></div>
-                <h4>4. Secure Export</h4>
-                <p>Customs clearance and container shipping to international destinations.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-
-
-
-<!-- Simple CSS for smooth reveals on scroll (If not already in your CSS file) -->
-<style>
-    .reveal {
-        opacity: 0;
-        transform: translateY(30px);
-        transition: all 0.8s ease-out;
-    }
-    .reveal.active {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    /* Adding connecting lines for process steps on desktop */
-    @media (min-width: 992px) {
-        .process-step:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            top: 40px;
-            right: -50%;
-            width: 100%;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.2);
-            border-top: 2px dashed rgba(255, 255, 255, 0.5);
-            z-index: 0;
-        }
-        .process-step .process-icon {
-            position: relative;
-            z-index: 1;
-        }
-    }
-</style>
-
-
-
+<!-- Scroll Reveal Script[cite: 6] -->
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const reveals = document.querySelectorAll(".reveal");
@@ -273,7 +192,7 @@ if (isset($conn)) {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add("active");
-                    observer.unobserve(entry.target);
+                    observer.unobserve(entry.target); // Trigger only once
                 }
             });
         }, {
@@ -283,5 +202,5 @@ if (isset($conn)) {
         reveals.forEach(reveal => revealOnScroll.observe(reveal));
     });
 </script>
-<!-- Include Footer -->
+
 <?php include 'includes/footer.php'; ?>
