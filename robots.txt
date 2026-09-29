@@ -1,13 +1,13 @@
-# robots.txt for Bhagirath Enterprise
+# robots.txt for SS Bouncers
 
 User-agent: *
 Disallow: /admin/
 Disallow: /config/
 Disallow: /includes/
-Disallow: /newsletter-process.php
-Disallow: /inquiry-process.php
+Disallow: /assets/
+Disallow: /submit_inquiry.php
 
 Allow: /
 
 # Sitemap link
-Sitemap: https://royalblue-gazelle-538620.hostingersite.com/sitemap.xml
+Sitemap: https://chocolate-llama-622925.hostingersite.com/sitemap.xml

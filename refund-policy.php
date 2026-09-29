@@ -1,49 +1,44 @@
-<?php include 'include/header.php'; ?>
+<?php 
+require_once 'config/connect.php';
+$pageTitle = "Cancellation & Refund Policy | SS Bouncers";
+include 'includes/header.php'; 
+?>
 
-<section class="py-5" style="background-color: #f8f9fa;">
-    <div class="container mt-5">
-        <div class="row bg-white p-4 p-md-5 rounded shadow-sm">
-            <div class="col-12">
-                <h1 class="mb-4" style="color: #17385A; font-weight: 700;">Refund and Cancellation Policy</h1>
+<section class="page-header position-relative py-5">
+    <div class="page-header-bg"></div>
+    <div class="container position-relative z-2 py-4 text-center">
+        <h1 class="display-4 fw-bold text-white mb-0">Cancellation & Refund Policy</h1>
+    </div>
+</section>
+
+<section class="py-5 bg-light-custom">
+    <div class="container py-5">
+        <div class="row bg-white p-4 p-md-5 rounded-4 shadow-sm border border-light">
+            <div class="col-12 policy-content">
                 <p class="text-muted mb-5"><strong>Last Updated:</strong> <?= date('F d, Y'); ?></p>
 
-                <p>At <strong>EURASIASTONEINDIA</strong>, we strive to ensure the highest quality of our agricultural exports and food products. Since we deal in consumable goods, our refund and cancellation policies are strictly structured to comply with international food safety, hygiene, and export standards.</p>
+                <p class="text-muted">At <strong>SS Bouncers</strong>, we strive to deliver highly professional and uninterrupted security and manpower services. Since our operations involve human resource allocation, planning, and deployment, our cancellation and refund policies are structured accordingly.</p>
 
-                <h3 class="mt-5 mb-3" style="color: #E3000F;">Cancellation Policy</h3>
-                
-                <h4 class="mt-4" style="font-size: 1.1rem; color: #17385A; font-weight: 600;">1. Order Cancellation Before Dispatch</h4>
-                <p>You may cancel your order within <strong>24 hours</strong> of placing it, provided the order has not yet been processed, packed, or dispatched from our facility. In such cases, a full refund will be initiated immediately. To request a cancellation, please contact us at <strong>eurasiastoneindia@gmail.com</strong> with your Order ID.</p>
-
-                <h4 class="mt-4" style="font-size: 1.1rem; color: #17385A; font-weight: 600;">2. Cancellation After Dispatch or Customs Clearance</h4>
-                <p>Due to the nature of agricultural and food exports, orders <strong>cannot be cancelled</strong> once they have been handed over to our logistics partners, shipped, or processed for customs clearance. If a delivery is refused by the buyer, shipping, handling, and customs charges will not be refunded.</p>
-                
-                <h4 class="mt-4" style="font-size: 1.1rem; color: #17385A; font-weight: 600;">3. Custom & Bulk Orders</h4>
-                <p>For wholesale, private-label, or custom-packaged bulk orders, cancellations are not permitted once the sourcing and packaging process has commenced. Advance payments for such customized bulk orders are strictly non-refundable.</p>
-
-                <hr class="my-5">
-
-                <h3 class="mb-3" style="color: #E3000F;">Return and Refund Policy</h3>
-                
-                <h4 class="mt-4" style="font-size: 1.1rem; color: #17385A; font-weight: 600;">1. Eligibility for Returns & Refunds</h4>
-                <p>Because we deal in food and agricultural products (spices, rice, seeds, etc.), we <strong>do not accept general returns</strong> (e.g., "change of mind") due to strict hygiene and quality control regulations. However, you are eligible for a replacement or refund under the following exceptional circumstances:</p>
-                <ul>
-                    <li>The product received is severely damaged or tampered with during transit.</li>
-                    <li>The incorrect product or quantity was delivered to you.</li>
-                    <li>The product is found to be significantly defective or contaminated upon delivery.</li>
+                <h4 class="mt-5 text-primary-dark fw-bold border-bottom pb-2">1. Cancellation of Event/Short-Term Deployments</h4>
+                <p class="text-muted">If you have booked bouncers or security guards for a specific event (1 to 5 days deployment):</p>
+                <ul class="text-muted">
+                    <li><strong>48 Hours Prior:</strong> Cancellations made at least 48 hours before the reporting time are eligible for a full refund of the advance amount.</li>
+                    <li><strong>Within 24 Hours:</strong> Cancellations made within 24 hours of the reporting time will incur a 50% cancellation fee to cover administrative and standby manpower costs.</li>
+                    <li><strong>Post-Deployment:</strong> Once personnel have reported to the location, no cancellation or refund requests will be entertained for that specific shift.</li>
                 </ul>
-                <p><em>Note: You must notify us within <strong>48 hours of delivery</strong> with clear photographic or video evidence of the damaged/incorrect items.</em></p>
 
-                <h4 class="mt-4" style="font-size: 1.1rem; color: #17385A; font-weight: 600;">2. Refund Processing & Inspection</h4>
-                <p>Once your claim is received and reviewed by our Quality Control team, we will notify you of the approval or rejection of your refund. If approved, the refund will be processed automatically to your original method of payment (Credit Card, UPI, Net Banking, etc.).</p>
+                <h4 class="mt-5 text-primary-dark fw-bold border-bottom pb-2">2. Termination of Monthly/Annual Contracts</h4>
+                <p class="text-muted">For clients on monthly or annual security contracts (Corporate, Residential, Industrial), services cannot be cancelled abruptly. A formal written notice must be served <strong>30 days in advance</strong> (or as per the signed service agreement) prior to the termination of services. Any advance payments covering the active notice period are non-refundable.</p>
 
-                <h4 class="mt-4" style="font-size: 1.1rem; color: #17385A; font-weight: 600;">3. Refund Timeline</h4>
-                <p>Approved refunds typically take <strong>5 to 7 business days</strong> to reflect in your bank account, depending on your card issuer's or bank's processing times.</p>
+                <h4 class="mt-5 text-primary-dark fw-bold border-bottom pb-2">3. Refund Processing</h4>
+                <p class="text-muted">Approved refunds for cancelled event bookings or excess payments will be processed electronically. It typically takes <strong>5 to 7 business days</strong> for the amount to reflect in your original payment method or bank account.</p>
 
-                <h4 class="mt-4" style="font-size: 1.1rem; color: #17385A; font-weight: 600;">4. Late or Missing Refunds</h4>
-                <p>If you haven’t received a refund within the stipulated time, first check your bank account again. Then, contact your credit card company or bank, as it may take some time before your refund is officially posted. If you have done this and still have not received your refund, please contact us immediately at <strong>eurasiastoneindia@gmail.com</strong> or call us at <strong>+91 99123 00247</strong>.</p>
+                <h4 class="mt-5 text-primary-dark fw-bold border-bottom pb-2">4. Disputed Services</h4>
+                <p class="text-muted">If you are unsatisfied with the performance or conduct of a deployed guard, please contact our control room immediately. We do not offer refunds for executed shifts, but we will initiate an immediate replacement of the personnel within 12-24 hours without any additional replacement charges.</p>
+
             </div>
         </div>
     </div>
 </section>
 
-<?php include 'include/footer.php'; ?>
+<?php include 'includes/footer.php'; ?>
