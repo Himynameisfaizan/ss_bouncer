@@ -228,101 +228,107 @@ body {
 /* ==============================
        BREADCRUMB SECTION STYLING
        ============================== */
+/* ==============================
+   BREADCRUMB STYLING (Premium Navbar)
+   ============================== */
 .breadcrumb-wrapper {
-  background:
-    linear-gradient(rgba(76, 60, 48, 0.9), rgba(34, 34, 34, 0.95)), /* Dark Brown to Charcoal Gradient */
-    url("assets/images/breadcrumb-bg.jpg")
-      center center / cover no-repeat fixed; /* Replaced unavailable URL */
-  padding: 100px 0 80px 0;
-  text-align: center;
-  color: #ffffff;
-  position: relative;
-  margin-top: 0;
-  border-bottom: 4px solid #DF9B2A; /* Updated bottom border to Turmeric Yellow for premium feel */
+    position: relative;
+    background-color: var(--primary-color);
+    padding: 80px 0 60px 0;
+    text-align: center;
+    color: var(--bg-white);
+    margin-top: 0;
+    border-bottom: 4px solid var(--secondary-color);
+    overflow: hidden;
+}
+
+/* Gradient Overlay matching Home Page Banner */
+.breadcrumb-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(11, 28, 61, 0.95) 0%, rgba(11, 28, 61, 0.8) 100%), url('../images/header-bg.jpg') center center / cover no-repeat;
+    z-index: 1;
 }
 
 .breadcrumb-title {
-  font-family: inherit; /* Website ki default premium font lega */
-  font-size: 3rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  margin-bottom: 15px;
-  text-transform: capitalize;
-  animation: slideDown 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
-  opacity: 0;
-  transform: translateY(-20px);
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+    text-transform: capitalize;
+    animation: slideDown 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    opacity: 0;
+    transform: translateY(-20px);
 }
 
 .custom-breadcrumb {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 500;
-  animation: slideUp 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) 0.2s forwards;
-  opacity: 0;
-  transform: translateY(20px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 500;
+    animation: slideUp 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) 0.2s forwards;
+    opacity: 0;
+    transform: translateY(20px);
 }
 
 .custom-breadcrumb li {
-  display: inline-flex;
-  align-items: center;
+    display: inline-flex;
+    align-items: center;
 }
 
 .custom-breadcrumb li a {
-  color: rgba(255, 255, 255, 0.7); /* Slightly faded white for inactive link */
-  text-decoration: none;
-  transition: all 0.3s ease;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: var(--transition-smooth);
 }
 
 .custom-breadcrumb li a:hover {
-  color: #DF9B2A; /* Updated breadcrumb hover to Turmeric Yellow */
-  text-shadow: 0 0 10px rgba(223, 155, 42, 0.3);
+    color: var(--secondary-color);
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
 }
 
 .custom-breadcrumb li i {
-  margin-right: 6px;
+    margin-right: 6px;
 }
 
 .custom-breadcrumb li + li::before {
-  content: "\276F"; /* Right-pointing angle quotation mark */
-  padding: 0 12px;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 0.9rem;
+    content: "\276F"; 
+    padding: 0 12px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
 }
 
 .custom-breadcrumb li.active {
-  color: #DF9B2A; /* Updated active breadcrumb to Turmeric Yellow */
-  font-weight: 700;
+    color: var(--secondary-color);
+    font-weight: 700;
 }
 
 @keyframes slideDown {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    to { opacity: 1; transform: translateY(0); }
 }
+
 @keyframes slideUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Mobile Adjustments */
 @media (max-width: 768px) {
-  .breadcrumb-wrapper {
-    padding: 80px 0 60px 0;
-  }
-  .breadcrumb-title {
-    font-size: 2.2rem;
-  }
-  .custom-breadcrumb {
-    font-size: 0.95rem;
-  }
+    .breadcrumb-wrapper {
+        padding: 60px 0 40px 0;
+    }
+    .breadcrumb-title {
+        font-size: 2.2rem;
+    }
+    .custom-breadcrumb {
+        font-size: 0.95rem;
+    }
 }
 /* ================== FOOTER STYLES ================== */
 .main-footer {

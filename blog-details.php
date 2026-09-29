@@ -1,163 +1,131 @@
 <?php
-// Database connection include karein
-include('config/connect.php');
+require_once 'config/connect.php';
 
 // URL se slug fetch karein
-$slug = isset($_GET['slug']) ? mysqli_real_escape_string($conn, $_GET['slug']) : '';
+$slug = isset($_GET['slug']) ? $conn->real_escape_string($_GET['slug']) : '';
 
-// Database se specific blog fetch karein
-$blogQuery = mysqli_query($conn, "SELECT * FROM blogs WHERE slug = '$slug' AND status = 1");
-$blog = mysqli_fetch_assoc($blogQuery);
+// Fetch specific blog using DB column blog_id[cite: 11]
+$blogQuery = $conn->query("SELECT * FROM blogs WHERE slug = '$slug' AND status = 1");
+$blog = $blogQuery ? $blogQuery->fetch_assoc() : null;
 
-// Agar blog nahi milta (invalid slug) toh wapas blog page par bhej dein
+// Fallback to ID if no slug match (for robustness)
+if (!$blog && isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $id = intval($_GET['id']);
+    $blogQuery = $conn->query("SELECT * FROM blogs WHERE blog_id = $id AND status = 1");
+    $blog = $blogQuery ? $blogQuery->fetch_assoc() : null;
+}
+
 if (!$blog) {
     echo "<script>window.location.href='blog.php';</script>";
     exit;
 }
 
-// Dynamic Variables Setup
-$pageTitle = $blog['title'];
+// Variables Setup
 $publishDate = date('F d, Y', strtotime($blog['created_at']));
-$authorName = !empty($blog['author']) ? $blog['author'] : 'Admin Team';
-$mainImage = !empty($blog['image']) ? 'admin/assets/img/uploads/blogs/' . $blog['image'] : 'https://images.unsplash.com/photo-1606914501449-5a96b6ce24ca?q=80&w=1200';
-
-// Current Page URL for Social Sharing
+$authorName = !empty($blog['author']) ? $blog['author'] : 'SS Bouncers Team';
+$mainImage = !empty($blog['image']) ? $site . 'admin/assets/img/uploads/blogs/' . $blog['image'] : 'assets/images/default-blog.jpg';
 $currentURL = "http://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+
+// SEO
+$pageTitle = !empty($blog['meta_title']) ? $blog['meta_title'] : $blog['title'] . " | SS Bouncers";
+$meta_description = !empty($blog['meta_desc']) ? $blog['meta_desc'] : mb_strimwidth(strip_tags($blog['description']), 0, 150, "...");
+$meta_keywords = !empty($blog['meta_key']) ? $blog['meta_key'] : "security blog, bouncers, safety tips";
 
 include 'includes/header.php';
 include 'includes/breadcrumb.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <title><?= htmlspecialchars($blog['meta_title']); ?></title>
-    <meta name="description" content="<?= htmlspecialchars(strip_tags($blog['meta_desc'])); ?>">
-    <meta name="keywords" content="<?= htmlspecialchars($blog['meta_key']); ?>">
-    
-    <link rel="icon" href="<?= htmlspecialchars($favicon); ?>" type="image/x-icon">
-    <!-- Blog Posting Schema Markup (JSON-LD) -->
-    <script type="application/ld+json">
-        {
-        "@context": "https://schema.org",
-        "@type": "BlogPosting",
-        "headline": "<?= htmlspecialchars($blog['title']); ?>",
-        "image": "<?= $site; ?>/admin/assets/img/uploads/blogs/<?= htmlspecialchars($blog['image']); ?>",
-        "author": {
-            "@type": "Person",
-            "name": "<?= htmlspecialchars($blog['author'] ?? 'Admin'); ?>"
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": "Bhagirath Enterprise",
-            "logo": {
-            "@type": "ImageObject",
-            "url": "<?= $site; ?>/assets/images/logo/logo.png"
-            }
-        },
-        "datePublished": "<?= htmlspecialchars($blog['created_at']); ?>",
-        "description": "<?= htmlspecialchars(strip_tags(substr($blog['description'], 0, 150))); ?>"
-        }
-    </script>
-</head>
-<body>
-    
-<section class="single-blog-section">
-    <div class="container">
-        <div class="row">
+<!-- ==================== BLOG DETAILS ==================== -->
+<section class="single-blog-section py-5 bg-white">
+    <div class="container py-4">
+        <div class="row g-5">
 
             <!-- Main Content Area -->
-            <div class="col-lg-8 pe-lg-5">
-                <div class="blog-details-content">
+            <div class="col-lg-8">
+                <div class="blog-details-content bg-white p-4 p-md-5 rounded-4 shadow-sm border border-light">
+                    
+                    <img src="<?php echo htmlspecialchars($mainImage); ?>" alt="<?php echo htmlspecialchars($blog['title']); ?>" class="w-100 rounded-4 shadow-sm mb-4 object-fit-cover" style="max-height: 450px;">
 
-                    <img src="<?php echo $mainImage; ?>" alt="<?php echo $blog['title']; ?>">
-
-                    <div class="blog-meta-top">
-                        <span><i class="fa-regular fa-calendar-days"></i> <?php echo $publishDate; ?></span>
-                        <span><i class="fa-regular fa-user"></i> By <?php echo $authorName; ?></span>
-                        <span><i class="fa-regular fa-folder-open"></i> News & Insights</span>
+                    <div class="blog-meta-top d-flex flex-wrap gap-4 pb-3 border-bottom mb-4">
+                        <span class="text-muted"><i class="fa-solid fa-calendar-days text-secondary-accent me-2"></i> <?php echo $publishDate; ?></span>
+                        <span class="text-muted"><i class="fa-solid fa-user text-secondary-accent me-2"></i> By <?php echo htmlspecialchars($authorName); ?></span>
                     </div>
 
-                    <h1><?php echo $blog['title']; ?></h1>
-
-                    <div class="blog-description py-4">
+                    <div class="blog-description-body text-muted" style="line-height: 1.8; font-size: 1.05rem;">
                         <?php echo $blog['description']; ?>
                     </div>
 
                     <!-- Share Options -->
-                    <div class="share-box">
-                        <span>Share this article:</span>
-                        <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode($currentURL); ?>" target="_blank" class="share-btn bg-fb"><i class="fa-brands fa-facebook-f"></i></a>
-                        <a href="https://twitter.com/intent/tweet?url=<?php echo urlencode($currentURL); ?>&text=<?php echo urlencode($blog['title']); ?>" target="_blank" class="share-btn bg-tw"><i class="fa-brands fa-twitter"></i></a>
-                        <a href="https://www.linkedin.com/shareArticle?mini=true&url=<?php echo urlencode($currentURL); ?>" target="_blank" class="share-btn bg-in"><i class="fa-brands fa-linkedin-in"></i></a>
-                        <a href="https://api.whatsapp.com/send?text=<?php echo urlencode($blog['title'] . " " . $currentURL); ?>" target="_blank" class="share-btn bg-wa"><i class="fa-brands fa-whatsapp"></i></a>
+                    <div class="share-box d-flex align-items-center gap-3 py-4 mt-5 border-top border-bottom">
+                        <span class="fw-bold text-primary-dark">Share Article:</span>
+                        <div class="d-flex gap-2">
+                            <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode($currentURL); ?>" target="_blank" class="share-icon bg-primary-dark text-white rounded-circle d-flex justify-content-center align-items-center shadow-sm"><i class="fa-brands fa-facebook-f"></i></a>
+                            <a href="https://twitter.com/intent/tweet?url=<?php echo urlencode($currentURL); ?>&text=<?php echo urlencode($blog['title']); ?>" target="_blank" class="share-icon bg-primary-dark text-white rounded-circle d-flex justify-content-center align-items-center shadow-sm"><i class="fa-brands fa-x-twitter"></i></a>
+                            <a href="https://www.linkedin.com/shareArticle?mini=true&url=<?php echo urlencode($currentURL); ?>" target="_blank" class="share-icon bg-primary-dark text-white rounded-circle d-flex justify-content-center align-items-center shadow-sm"><i class="fa-brands fa-linkedin-in"></i></a>
+                            <a href="https://api.whatsapp.com/send?text=<?php echo urlencode($blog['title'] . " " . $currentURL); ?>" target="_blank" class="share-icon bg-success text-white rounded-circle d-flex justify-content-center align-items-center shadow-sm"><i class="fa-brands fa-whatsapp"></i></a>
+                        </div>
                     </div>
 
                 </div>
             </div>
 
             <!-- Sidebar Area -->
-            <div class="col-lg-4 mt-5 mt-lg-0">
-                <div class="blog-sidebar">
+            <div class="col-lg-4">
+                <div class="sidebar-wrapper sticky-top" style="top: 100px; z-index: 10;">
 
                     <!-- Search Widget -->
-                    <div class="sidebar-widget">
-                        <h4 class="sidebar-title">Search</h4>
-                        <form class="sidebar-search" action="blog.php" method="GET">
-                            <input type="text" name="search" placeholder="Search insights...">
-                            <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    <div class="sidebar-widget bg-white p-4 rounded-4 shadow-sm border border-light mb-4">
+                        <h4 class="text-primary-dark fw-bold mb-3 pb-2 border-bottom">Search</h4>
+                        <form class="sidebar-search position-relative" action="blog.php" method="GET">
+                            <input type="text" name="search" class="form-control custom-input pe-5" placeholder="Search insights..." required>
+                            <button type="submit" class="position-absolute top-50 end-0 translate-middle-y bg-transparent border-0 text-secondary-accent me-3"><i class="fa-solid fa-magnifying-glass"></i></button>
                         </form>
                     </div>
 
-                    <!-- Categories Widget -->
-                    <div class="sidebar-widget">
-                        <h4 class="sidebar-title">Categories</h4>
-                        <ul class="sidebar-cats">
-                            <li><a href="blog.php">Export Trends <span>(12)</span></a></li>
-                            <li><a href="blog.php">Farming Practices <span>(08)</span></a></li>
-                            <li><a href="blog.php">Health Benefits <span>(15)</span></a></li>
-                            <li><a href="blog.php">Quality & Testing <span>(05)</span></a></li>
-                            <li><a href="blog.php">Company News <span>(03)</span></a></li>
-                        </ul>
-                    </div>
-
                     <!-- Dynamic Recent Posts Widget -->
-                    <div class="sidebar-widget">
-                        <h4 class="sidebar-title">Recent Posts</h4>
+                    <div class="sidebar-widget bg-white p-4 rounded-4 shadow-sm border border-light mb-4">
+                        <h4 class="text-primary-dark fw-bold mb-4 pb-2 border-bottom">Recent Posts</h4>
 
                         <?php
-                        // Fetch 3 Recent Blogs excluding the current one
-                        $recentQuery = mysqli_query($conn, "SELECT * FROM blogs WHERE status = 1 AND blog_id != '{$blog['blog_id']}' ORDER BY created_at DESC LIMIT 3");
+                        $recentQuery = $conn->query("SELECT * FROM blogs WHERE status = 1 AND blog_id != '{$blog['blog_id']}' ORDER BY created_at DESC LIMIT 3");
 
-                        if (mysqli_num_rows($recentQuery) > 0) {
-                            while ($recentBlog = mysqli_fetch_assoc($recentQuery)):
+                        if ($recentQuery && $recentQuery->num_rows > 0) {
+                            while ($recentBlog = $recentQuery->fetch_assoc()):
                                 $r_date = date('M d, Y', strtotime($recentBlog['created_at']));
-                                $r_img = !empty($recentBlog['image']) ? 'admin/assets/img/uploads/blogs/' . $recentBlog['image'] : 'https://images.unsplash.com/photo-1615486171448-4228965f7c32?q=80&w=200';
+                                $r_img = !empty($recentBlog['image']) ? $site . 'admin/assets/img/uploads/blogs/' . $recentBlog['image'] : 'assets/images/default-blog.jpg';
                         ?>
-                                <div class="recent-post-item">
-                                    <img src="<?php echo $r_img; ?>" alt="<?php echo $recentBlog['title']; ?>">
-                                    <div class="recent-post-info">
-                                        <h4><a href="blog-details.php?slug=<?php echo $recentBlog['slug']; ?>"><?php echo $recentBlog['title']; ?></a></h4>
-                                        <span><?php echo $r_date; ?></span>
+                                <div class="recent-post-item d-flex gap-3 mb-3 pb-3 border-bottom">
+                                    <img src="<?php echo htmlspecialchars($r_img); ?>" alt="Thumb" class="rounded-3 object-fit-cover shadow-sm" style="width: 80px; height: 80px;">
+                                    <div class="recent-post-info d-flex flex-column justify-content-center">
+                                        <h6 class="fw-bold mb-1 lh-sm">
+                                            <a href="blog-details.php?slug=<?php echo htmlspecialchars($recentBlog['slug']); ?>" class="text-decoration-none text-primary-dark blog-title-hover">
+                                                <?php echo htmlspecialchars(mb_strimwidth($recentBlog['title'], 0, 50, "...")); ?>
+                                            </a>
+                                        </h6>
+                                        <span class="text-muted small"><i class="fa-solid fa-calendar-days text-secondary-accent me-1"></i> <?php echo $r_date; ?></span>
                                     </div>
                                 </div>
                         <?php
                             endwhile;
                         } else {
-                            echo "<p style='color: #666; font-size: 13px;'>No recent posts available.</p>";
+                            echo "<p class='text-muted small'>No recent posts available.</p>";
                         }
                         ?>
                     </div>
 
                     <!-- CTA Widget -->
-                    <div class="sidebar-widget text-center" style="background: var(--primary-green); color: white;">
-                        <i class="fa-solid fa-box-open" style="font-size: 40px; color: var(--accent-orange); margin-bottom: 15px;"></i>
-                        <h4 style="font-weight: 800; margin-bottom: 15px;">Looking for Bulk Spices?</h4>
-                        <p style="font-size: 0.95rem; opacity: 0.9; margin-bottom: 20px;">Get a free quotation for your international export requirements today.</p>
-                        <a href="contact.php" class="btn-theme" style="background: var(--accent-orange); color: white; padding: 10px 20px; border-radius: 30px; text-decoration: none; font-weight: 700; display: inline-block;">Request Quote</a>
+                    <div class="sidebar-widget p-4 rounded-4 shadow-sm text-center position-relative overflow-hidden" style="background-color: var(--primary-color);">
+                        <div class="position-absolute top-0 end-0 m-2 opacity-25">
+                            <i class="fa-solid fa-shield-halved display-1"></i>
+                        </div>
+                        <div class="position-relative z-2">
+                            <div class="bg-white rounded-circle d-inline-flex justify-content-center align-items-center mb-3 shadow" style="width: 70px; height: 70px;">
+                                <i class="fa-solid fa-headset fs-2 text-secondary-accent"></i>
+                            </div>
+                            <h4 class="text-white fw-bold mb-3">Need Security Services?</h4>
+                            <p class="text-white-50 small mb-4">Get a free quotation for your corporate or residential security requirements today.</p>
+                            <a href="contact.php" class="btn btn-premium w-100">Request Quote <i class="fa-solid fa-arrow-right ms-1"></i></a>
+                        </div>
                     </div>
 
                 </div>
@@ -167,8 +135,5 @@ include 'includes/breadcrumb.php';
     </div>
 </section>
 
-<!-- Premium Inquiry Section -->
-<?php include ('includes/inquiry-form.php'); ?>
-
-<!-- Include Footer -->
+<?php include 'includes/inquiry-form.php'; ?>
 <?php include 'includes/footer.php'; ?>

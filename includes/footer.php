@@ -1,30 +1,28 @@
 <?php
-// Note: Agar aapne header.php mein DB connection ($pdo) bana liya hai, 
-// toh wahi connection yaha reuse hoga. 
+global $conn, $site;
 
-// 1. Fetch Contact Details & Copyright
-$stmt_contact = $pdo->query("SELECT * FROM contacts LIMIT 1");
-$contact_details = $stmt_contact->fetch(PDO::FETCH_ASSOC);
+$stmt_contact = $conn->query("SELECT * FROM contacts LIMIT 1");
+$contact_details = $stmt_contact ? $stmt_contact->fetch_assoc() : null;
 
-// 2. Fetch Active Footer Logo
-$stmt_footer_logo = $pdo->query("SELECT logo_path FROM logos WHERE location = 'header' AND is_active = 1 ORDER BY uploaded_at DESC LIMIT 1");
-$footer_logo_data = $stmt_footer_logo->fetch(PDO::FETCH_ASSOC);
-$footer_logo = $footer_logo_data ? $footer_logo_data['logo_path'] : 'default_footer_logo.png';
+$stmt_footer_logo = $conn->query("SELECT logo_path FROM logos WHERE location = 'header' AND is_active = 1 ORDER BY uploaded_at DESC LIMIT 1");
+$footer_logo_data = $stmt_footer_logo ? $stmt_footer_logo->fetch_assoc() : null;
+$footer_logo = $footer_logo_data ? $site . 'admin/uploads/' . $footer_logo_data['logo_path'] : 'assets/images/default-logo.png';
 
-// 3. Fetch About Us Content (and truncate for 3-4 lines)
-$stmt_about = $pdo->query("SELECT content FROM about_us LIMIT 1");
-$about_data = $stmt_about->fetch(PDO::FETCH_ASSOC);
+$stmt_about = $conn->query("SELECT content FROM about_us LIMIT 1");
+$about_data = $stmt_about ? $stmt_about->fetch_assoc() : null;
 $about_snippet = "";
 if($about_data) {
-    // HTML tags remove karna taaki layout kharab na ho
     $clean_text = strip_tags($about_data['content']); 
-    // Kareeb 150-160 characters (3-4 lines) tak limit karna
     $about_snippet = mb_strimwidth($clean_text, 0, 160, "..."); 
 }
 
-// 4. Fetch Services for Footer Links (Limit to 5-6 services so footer doesn't get too long)
-$stmt_footer_services = $pdo->query("SELECT id, service_name FROM services ORDER BY service_name ASC LIMIT 5");
-$footer_services = $stmt_footer_services->fetchAll(PDO::FETCH_ASSOC);
+$stmt_footer_services = $conn->query("SELECT id, service_name, slug_url FROM services WHERE status = 1 ORDER BY display_order ASC, service_name ASC LIMIT 5");
+$footer_services = [];
+if ($stmt_footer_services && $stmt_footer_services->num_rows > 0) {
+    while($row = $stmt_footer_services->fetch_assoc()) {
+        $footer_services[] = $row;
+    }
+}
 ?>
 
     <!-- ==================== FOOTER ==================== -->
@@ -35,13 +33,14 @@ $footer_services = $stmt_footer_services->fetchAll(PDO::FETCH_ASSOC);
                 <!-- Column 1: About & Logo -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="footer-widget pe-lg-4">
-                        <a href="index.php" class="d-inline-block mb-4">
-                            <img src="admin/uploads/<?= htmlspecialchars($footer_logo) ?>" alt="SS Bouncers Footer Logo" class="footer-logo-img">
+                       <div class="bg-white w-50 d-flex justify-content-center align-items-center border-3 my-4">
+                         <a href="index.php" class="d-inline-block mb-4">
+                            <img src="<?= htmlspecialchars($footer_logo) ?>" alt="SS Bouncers Footer Logo" class="footer-logo-img">
                         </a>
+                       </div>
                         <p class="footer-about-text mb-4">
                             <?= htmlspecialchars($about_snippet) ?>
                         </p>
-                        <!-- Social Links -->
                         <div class="footer-social">
                             <?php if(!empty($contact_details['facebook'])): ?>
                                 <a href="<?= htmlspecialchars($contact_details['facebook']) ?>" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
@@ -65,8 +64,10 @@ $footer_services = $stmt_footer_services->fetchAll(PDO::FETCH_ASSOC);
                         <h4 class="footer-heading mb-4">Our Services</h4>
                         <ul class="footer-links list-unstyled">
                             <?php if(!empty($footer_services)): ?>
-                                <?php foreach($footer_services as $service): ?>
-                                    <li><a href="service_details.php?id=<?= $service['id'] ?>"><?= htmlspecialchars($service['service_name']) ?></a></li>
+                                <?php foreach($footer_services as $service): 
+                                    $s_slug = !empty($service['slug_url']) ? $service['slug_url'] : preg_replace('/[^a-z0-9]+/i', '-', strtolower(trim($service['service_name'])));
+                                ?>
+                                    <li><a href="service-details.php?slug=<?= htmlspecialchars($s_slug) ?>"><?= htmlspecialchars($service['service_name']) ?></a></li>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <li><a href="#">Security Services</a></li>
@@ -146,3 +147,8 @@ $footer_services = $stmt_footer_services->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
     </footer>
+
+    <!-- Bootstrap JS Link (Make sure this exists before body close) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

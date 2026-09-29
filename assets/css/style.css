@@ -559,7 +559,7 @@
 
 /* ================== INQUIRY FORM STYLES ================== */
 .custom-input {
-    border: 1px solid rgba(0,0,0,0.1);
+    border: 1px solid rgba(11, 28, 61, 0.1);
     background-color: #fcfcfc;
     border-radius: 8px;
     transition: var(--transition-smooth);
@@ -568,7 +568,7 @@
 .custom-input:focus {
     background-color: var(--bg-white);
     border-color: var(--secondary-color);
-    box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.2);
+    box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.15);
 }
 
 .form-floating label {
@@ -576,7 +576,8 @@
 }
 
 .map-wrapper iframe {
-    filter: grayscale(20%) contrast(1.1); /* Slight filter to make map look more premium */
+    filter: grayscale(20%) contrast(1.1); 
+    display: block; 
 }
 
 /* ================== FAQ ACCORDION STYLES ================== */
