@@ -106,31 +106,24 @@ include 'includes/breadcrumb.php'
                     <?php 
                     if($result && $result->num_rows > 0) {
                         while($row = $result->fetch_assoc()) {
-                            // Slug validation
                             $slug = !empty($row['slug_url']) ? $row['slug_url'] : preg_replace('/[^a-z0-9]+/i', '-', strtolower(trim($row['service_name'])));
                             $service_url = "service-details.php?slug=" . $slug;
                             
                             $imagePath = !empty($row['img_path']) ? $site . 'admin/assets/img/uploads/' . $row['img_path'] : 'assets/images/default-service.jpg';
-                            
-                            // WhatsApp Message
                             $wa_message = urlencode("Hi SS Bouncers, I want to know more about the " . $row['service_name'] . ".");
                     ?>
                     
-                    <!-- Premium Service Card -->
                     <div class="col-md-6 reveal">
                         <div class="card h-100 shadow-sm border-0 service-card-premium bg-white rounded-4 overflow-hidden">
-                            <!-- Image Section -->
                             <div class="img-wrapper position-relative" style="height: 240px; overflow: hidden;">
                                 <a href="<?= $service_url ?>" class="d-block h-100">
                                     <img src="<?= $imagePath ?>" class="card-img-top w-100 h-100 object-fit-cover" alt="<?= htmlspecialchars($row['service_name']) ?>">
                                 </a>
-                                <!-- Overlay Badge -->
                                 <div class="position-absolute top-0 end-0 m-3">
                                     <span class="badge bg-secondary-accent text-primary-dark fw-bold px-3 py-2 rounded-pill shadow-sm">Premium</span>
                                 </div>
                             </div>
                             
-                            <!-- Content Section -->
                             <div class="card-body p-4 d-flex flex-column">
                                 <a href="<?= $service_url ?>" class="text-decoration-none">
                                     <h4 class="card-title text-primary-dark fw-bold mb-3 service-title-hover"><?= htmlspecialchars($row['service_name']) ?></h4>
@@ -139,18 +132,15 @@ include 'includes/breadcrumb.php'
                                     <?= htmlspecialchars(mb_strimwidth($row['short_desc'], 0, 110, "...")) ?>
                                 </p>
                                 
-                                <!-- Read More Link -->
                                 <a href="<?= $service_url ?>" class="read-more-link fw-bold text-primary-dark mb-4 d-inline-block">
                                     Read Full Details <i class="fa-solid fa-arrow-right ms-1"></i>
                                 </a>
                                 
-                                <!-- Action Buttons -->
                                 <div class="d-flex justify-content-between align-items-center mt-auto border-top pt-3">
                                     <!-- Request Call (Auto-selects service in contact form) -->
                                     <a href="contact.php?service=<?= $slug ?>" class="btn btn-outline-primary-custom flex-grow-1 me-2 py-2 text-center" style="font-size: 14px;">
                                         Request To Call
                                     </a>
-                                    <!-- Direct WhatsApp -->
                                     <a href="https://wa.me/<?= $wa_number ?>?text=<?= $wa_message ?>" target="_blank" class="btn btn-whatsapp py-2 px-3" title="Chat on WhatsApp">
                                         <i class="fa-brands fa-whatsapp fs-5"></i>
                                     </a>

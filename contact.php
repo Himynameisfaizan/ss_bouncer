@@ -1,112 +1,85 @@
 <?php
-include ('config/connect.php'); 
-
-$pageTitle = "Contact Us"; 
-
-$contactQuery = mysqli_query($conn, "SELECT * FROM contacts ORDER BY id DESC LIMIT 1");
-$contactInfo = mysqli_fetch_assoc($contactQuery);
-
-$siteAddress = !empty($contactInfo['address']) ? $contactInfo['address'] : 'BLOCK- J SF-2 J-39 Sector 12, Pratap Vihar, Ghaziabad - 201001, U.P, India.';
-$sitePhone = !empty($contactInfo['phone']) ? $contactInfo['phone'] : '+91 97171 79432';
-$siteEmail = !empty($contactInfo['email']) ? $contactInfo['email'] : 'info@kisantokitchen.com';
-$siteWorkingHours = !empty($contactInfo['working_hours']) ? $contactInfo['working_hours'] : 'Mon - Sat, 9:00 AM to 6:00 PM IST';
-
+require_once 'config/connect.php'; 
 $msg = "";
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_inquiry'])) {
-    $name = mysqli_real_escape_string($conn, $_POST['name']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $phone = mysqli_real_escape_string($conn, $_POST['phone']);
-    $company = mysqli_real_escape_string($conn, $_POST['company']);
-    $interest = mysqli_real_escape_string($conn, $_POST['interest']);
-    $message = mysqli_real_escape_string($conn, $_POST['message']);
-    
-    if(!empty($company)) {
-        $message = "Company: " . $company . "\n\nRequirements:\n" . $message;
-    }
+    $name = $conn->real_escape_string($_POST['name']);
+    $email = $conn->real_escape_string($_POST['email']);
+    $phone = $conn->real_escape_string($_POST['phone']);
+    $subject = $conn->real_escape_string($_POST['interest']);
+    $message = $conn->real_escape_string($_POST['message']);
 
-    $insertQuery = "INSERT INTO inquiries (name, email, phone, subject, message, status) VALUES ('$name', '$email', '$phone', '$interest', '$message', 0)";
+    $insertQuery = "INSERT INTO inquiries (name, email, phone, subject, message, status) VALUES ('$name', '$email', '$phone', '$subject', '$message', 'new')";
     
-    if(mysqli_query($conn, $insertQuery)) {
-        $msg = "<div class='alert alert-success mt-3'>Thank you! Your quotation request has been sent successfully. Our team will contact you soon.</div>";
+    if($conn->query($insertQuery)) {
+        $msg = "<div class='alert alert-success mt-3 shadow-sm border-0'><i class='fa-solid fa-circle-check me-2'></i> Thank you! Your request has been sent successfully. Our security experts will contact you soon.</div>";
     } else {
-        $msg = "<div class='alert alert-danger mt-3'>Oops! Something went wrong. Please try again or call us directly.</div>";
+        $msg = "<div class='alert alert-danger mt-3 shadow-sm border-0'><i class='fa-solid fa-circle-exclamation me-2'></i> Oops! Something went wrong. Please call us directly.</div>";
     }
 }
 
+$contactQuery = $conn->query("SELECT * FROM contacts ORDER BY id DESC LIMIT 1");
+$contactInfo = $contactQuery ? $contactQuery->fetch_assoc() : null;
+
+$siteAddress = !empty($contactInfo['address']) ? $contactInfo['address'] : 'Padmanagar opposite venkateshwara swamy temple, Hyderabad, Telangana - 500085';
+$sitePhone = !empty($contactInfo['phone']) ? $contactInfo['phone'] : '+91 7097059293';
+$siteEmail = !empty($contactInfo['email']) ? $contactInfo['email'] : 'sirajshaik225@gmail.com';
+$siteWorkingHours = !empty($contactInfo['working_hours']) ? $contactInfo['working_hours'] : '24/7 Support Available';
 
 $currentPage = basename($_SERVER['PHP_SELF']);
+$seo_meta_query = $conn->query("SELECT meta_title, meta_key, meta_desc FROM meta WHERE page_url = '$currentPage'");
+$seo_data = ($seo_meta_query && $seo_meta_query->num_rows > 0) ? $seo_meta_query->fetch_assoc() : null;
 
-$seo_meta_query = mysqli_query($conn, "SELECT meta_title, meta_key, meta_desc FROM meta WHERE page_url = '$currentPage'");
-
-if ($seo_meta_query && mysqli_num_rows($seo_meta_query) > 0) {
-    $seo_data = mysqli_fetch_assoc($seo_meta_query);
-    
-    $metaTitle = $seo_data['meta_title'];
-    $meta_keywords = $seo_data['meta_key'];
-    $meta_description = $seo_data['meta_desc'];
-} else {
-    $pageTitle = "Bhagirath Enterprise";
-    $meta_keywords = "export, agricultural products";
-    $meta_description = "Bhagirath Enterprise Export Company.";
-}
-
+$pageTitle = $seo_data['meta_title'] ?? "Contact Us | SS Bouncers";
+$meta_keywords = $seo_data['meta_key'] ?? "contact ss bouncers, hire security guards, bouncer agency hyderabad";
+$meta_description = $seo_data['meta_desc'] ?? "Get in touch with SS Bouncers for premium security guard and housekeeping services. We provide verified and professional staff.";
 
 include 'includes/header.php'; 
 include 'includes/breadcrumb.php'; 
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
- <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($metaTitle); ?></title>
-    <meta name="description" content="<?= htmlspecialchars($meta_description); ?>">
-    <meta name="keywords" content="<?= htmlspecialchars($meta_keywords); ?>">
-    <link rel="icon" href="<?= htmlspecialchars($favicon); ?>" type="image/png">
-</head>
-<body>
-    
-
-<!-- ==============================
-     1. CONTACT INFO & FORM SECTION
-     ============================== -->
-<section class="contact-page-section">
-    <div class="container">
-        <div class="row">
+<!-- ==================== CONTACT INFO & FORM ==================== -->
+<section class="contact-page-section py-5 bg-white">
+    <div class="container py-5">
+        <div class="row g-5">
             
-            <!-- Left Side: Dynamic Contact Information -->
+            <!-- Left Side: Contact Information -->
             <div class="col-lg-5 reveal">
-                <div class="contact-info-wrapper">
-                    <span class="sec-subtitle">Get In Touch</span>
-                    <h2 class="sec-title" style="color: #212529;">Let's Discuss Your Export Needs.</h2>
-                    <p class="contact-desc">Have questions about our premium spices, bulk pricing, or international shipping? Our dedicated team is ready to assist you. Reach out to us today!</p>
+                <div class="contact-info-wrapper pe-lg-4">
+                    <span class="sub-heading text-secondary-accent fw-bold text-uppercase tracking-wider mb-2 d-block">Get In Touch</span>
+                    <h2 class="main-heading text-primary-dark fw-bold mb-4" style="font-size: 2.5rem;">Protecting What Matters Most.</h2>
+                    <p class="text-muted mb-5" style="line-height: 1.8; font-size: 1.05rem;">Require professional security personnel or housekeeping staff? Reach out to us for a customized plan. Our experts are ready to assist you 24/7.</p>
                     
                     <!-- Location Card -->
-                    <div class="info-card">
-                        <div class="info-icon"><i class="fa-solid fa-location-dot"></i></div>
-                        <div class="info-content">
-                            <h4>Head Office & Processing Unit</h4>
-                            <p><?php echo htmlspecialchars($siteAddress); ?></p>
+                    <div class="contact-info-card d-flex p-4 rounded-4 bg-light-custom mb-4 shadow-sm border border-light">
+                        <div class="icon-box bg-white text-primary-dark rounded-circle d-flex align-items-center justify-content-center shadow-sm flex-shrink-0 me-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fa-solid fa-location-dot"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-primary-dark mb-2">Head Office</h5>
+                            <p class="text-muted mb-0"><?php echo htmlspecialchars($siteAddress); ?></p>
                         </div>
                     </div>
 
                     <!-- Phone Card -->
-                    <div class="info-card">
-                        <div class="info-icon"><i class="fa-solid fa-phone"></i></div>
-                        <div class="info-content">
-                            <h4>Phone Inquiry</h4>
-                            <a href="tel:<?php echo htmlspecialchars($sitePhone); ?>"><?php echo htmlspecialchars($sitePhone); ?></a>
-                            <p style="font-size: 12px; margin-top: 5px;">(Available <?php echo htmlspecialchars($siteWorkingHours); ?>)</p>
+                    <div class="contact-info-card d-flex p-4 rounded-4 bg-light-custom mb-4 shadow-sm border border-light">
+                        <div class="icon-box bg-white text-primary-dark rounded-circle d-flex align-items-center justify-content-center shadow-sm flex-shrink-0 me-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fa-solid fa-phone-volume"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-primary-dark mb-2">Call Us 24/7</h5>
+                            <a href="tel:<?php echo htmlspecialchars($sitePhone); ?>" class="text-decoration-none fw-bold fs-5 text-secondary-accent"><?php echo htmlspecialchars($sitePhone); ?></a>
+                            <p class="text-muted mb-0 small mt-1"><?php echo htmlspecialchars($siteWorkingHours); ?></p>
                         </div>
                     </div>
 
                     <!-- Email Card -->
-                    <div class="info-card">
-                        <div class="info-icon"><i class="fa-solid fa-envelope"></i></div>
-                        <div class="info-content">
-                            <h4>Email Address</h4>
-                            <a href="mailto:<?php echo htmlspecialchars($siteEmail); ?>"><?php echo htmlspecialchars($siteEmail); ?></a>
+                    <div class="contact-info-card d-flex p-4 rounded-4 bg-light-custom shadow-sm border border-light">
+                        <div class="icon-box bg-white text-primary-dark rounded-circle d-flex align-items-center justify-content-center shadow-sm flex-shrink-0 me-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fa-solid fa-envelope"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-primary-dark mb-2">Email Us</h5>
+                            <a href="mailto:<?php echo htmlspecialchars($siteEmail); ?>" class="text-decoration-none text-muted"><?php echo htmlspecialchars($siteEmail); ?></a>
                         </div>
                     </div>
 
@@ -115,60 +88,76 @@ include 'includes/breadcrumb.php';
 
             <!-- Right Side: Contact Form -->
             <div class="col-lg-7 reveal">
-                <div class="contact-form-box">
-                    <h3>Request a Free Quotation</h3>
-                    <p>Fill out the form below and our export manager will get back to you within 24 hours.</p>
+                <div class="premium-form-box bg-white p-4 p-md-5 rounded-4 shadow-lg border border-light position-relative overflow-hidden">
+                    <div class="form-highlight-border"></div>
+                    <h3 class="fw-bold text-primary-dark mb-3">Request a Free Callback</h3>
+                    <p class="text-muted mb-4 pb-2 border-bottom">Fill out the details below and our security manager will contact you.</p>
                     
-                    <!-- Form Submission Alert Message -->
+                    <!-- Alert Message -->
                     <?php echo $msg; ?>
                     
-                    <form action="contact.php" method="POST">
-                        <div class="row">
-                            <div class="col-md-6 form-group">
-                                <input type="text" class="form-control" name="name" placeholder="Your Name" required>
+                    <form action="contact.php" method="POST" class="mt-4">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control custom-input" name="name" id="name" placeholder="Your Name" required>
+                                    <label for="name">Your Name</label>
+                                </div>
                             </div>
-                            <div class="col-md-6 form-group">
-                                <input type="text" class="form-control" name="company" placeholder="Company Name">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="tel" class="form-control custom-input" name="phone" id="phone" placeholder="Phone Number" required>
+                                    <label for="phone">Phone Number</label>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <input type="email" class="form-control custom-input" name="email" id="email" placeholder="Email Address" required>
+                                    <label for="email">Email Address</label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <select class="form-select custom-input" name="interest" id="interest" required>
+                                        <?php $selectedService = isset($_GET['service']) ? $_GET['service'] : ''; ?>
+                                        <option value="" disabled <?php echo ($selectedService == '') ? 'selected' : ''; ?>>Select a Service</option>
+                                        <option value="General Inquiry">General Inquiry</option>
+                                        
+                                        <!-- Dynamic Services from Database -->
+                                        <?php 
+                                        $servicesQuery = $conn->query("SELECT service_name, slug_url FROM services WHERE status = 1 ORDER BY service_name ASC");
+                                        if ($servicesQuery && $servicesQuery->num_rows > 0) {
+                                            while($srv = $servicesQuery->fetch_assoc()):
+                                                // Check match with slug OR name for smart auto-select
+                                                $slugCheck = !empty($srv['slug_url']) ? $srv['slug_url'] : $srv['service_name'];
+                                                $isSelected = ($selectedService == $slugCheck) ? 'selected' : '';
+                                        ?>
+                                        <option value="<?php echo htmlspecialchars($srv['service_name']); ?>" <?php echo $isSelected; ?>>
+                                            <?php echo htmlspecialchars($srv['service_name']); ?>
+                                        </option>
+                                        <?php 
+                                            endwhile;
+                                        }
+                                        ?>
+                                    </select>
+                                    <label for="interest">Interested In</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <textarea class="form-control custom-input" name="message" id="message" placeholder="Your Requirements" style="height: 130px" required></textarea>
+                                    <label for="message">Tell us about your security requirements...</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mt-4">
+                                <button type="submit" name="submit_inquiry" class="btn btn-premium w-100 py-3 rounded-3 fs-5">
+                                    Send Message <i class="fa-solid fa-paper-plane ms-2"></i>
+                                </button>
                             </div>
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-6 form-group">
-                                <input type="email" class="form-control" name="email" placeholder="Email Address" required>
-                            </div>
-                            <div class="col-md-6 form-group">
-                                <input type="tel" class="form-control" name="phone" placeholder="Phone / WhatsApp No." required>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <select class="form-select" name="interest" required>
-                                <?php $selectedProduct = isset($_GET['product']) ? $_GET['product'] : ''; ?>
-                                <option value="" disabled <?php echo ($selectedProduct=='')?'selected':''; ?>>Select Product of Interest</option>
-                                <option value="General Inquiry">General Business Inquiry</option>
-                                
-                                <!-- Dynamic Products from Database -->
-                                <?php 
-                                $dropdownQuery = mysqli_query($conn, "SELECT pro_name FROM products WHERE status = 1");
-                                if ($dropdownQuery && mysqli_num_rows($dropdownQuery) > 0) {
-                                    while($dropdownItem = mysqli_fetch_assoc($dropdownQuery)):
-                                        $isSelected = ($selectedProduct == $dropdownItem['pro_name']) ? 'selected' : '';
-                                ?>
-                                <option value="<?php echo htmlspecialchars($dropdownItem['pro_name']); ?>" <?php echo $isSelected; ?>>
-                                    <?php echo htmlspecialchars($dropdownItem['pro_name']); ?>
-                                </option>
-                                <?php 
-                                    endwhile;
-                                }
-                                ?>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <textarea class="form-control" name="message" placeholder="Tell us about your requirement (Quantity, Destination Port, Packaging preference)..." required></textarea>
-                        </div>
-
-                        <button type="submit" name="submit_inquiry" class="btn-submit">Send Message <i class="fa-regular fa-paper-plane ms-2"></i></button>
                     </form>
                 </div>
             </div>
@@ -177,97 +166,29 @@ include 'includes/breadcrumb.php';
     </div>
 </section>
 
-<!-- ==============================
-     2. GOOGLE MAP SECTION
-     ============================== -->
-<section class="map-section reveal">
-    <div class="container">
-        <div class="map-container">
+<!-- ==================== GOOGLE MAP ==================== -->
+<section class="map-section border-top border-bottom reveal">
+    <div class="container-fluid p-0">
+        <div class="map-container" style="height: 450px;">
             <?php 
                 if (!empty($contactInfo['map'])) {
                     $mapData = trim($contactInfo['map']);
-                    
-                    // Check if it's a full iframe tag or just a URL
                     if (strpos($mapData, '<iframe') !== false) {
-                        // Automatically adjust width/height of iframe to fit container
-                        $mapIframe = str_replace(['width="600"', 'width="100%"'], 'width="100%"', $mapData);
-                        $mapIframe = preg_replace('/height="\d+"/', 'height="100%"', $mapIframe);
+                        $mapIframe = preg_replace('/width="[^"]+"/', 'width="100%"', $mapData);
+                        $mapIframe = preg_replace('/height="[^"]+"/', 'height="100%"', $mapIframe);
                         echo $mapIframe;
                     } else {
-                        // If it's just a raw URL (like in your database dump)
-                        echo '<iframe src="' . htmlspecialchars($mapData) . '" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
+                        echo '<iframe src="' . htmlspecialchars($mapData) . '" width="100%" height="100%" style="border:0; filter: grayscale(20%) contrast(1.1);" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
                     }
                 } else {
-                    // Fallback map
-                    echo '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d112028.98822506727!2d77.35246733221995!3d28.66317765955627!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cf1bb41c50fdf%3A0xe6f06fd26a7798ba!2sGhaziabad%2C%20Uttar%20Pradesh!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
+                    echo '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15225.99264104033!2d78.4326574!3d17.4357777!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb9158f201b205%3A0x11bbe7be7792411b!2sHyderabad%2C%20Telangana!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin" width="100%" height="100%" style="border:0; filter: grayscale(20%) contrast(1.1);" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
                 }
             ?>
         </div>
     </div>
 </section>
 
-<!-- ==============================
-     3. SUPPORT / FAQ SECTION
-     ============================== -->
-<section class="faq-section">
-    <div class="container">
-        <div class="row justify-content-center text-center mb-5 reveal">
-            <div class="col-lg-8">
-                <span class="sec-subtitle">Customer Support</span>
-                <h2 class="sec-title">Common Queries</h2>
-            </div>
-        </div>
-
-        <div class="row justify-content-center reveal">
-            <div class="col-lg-8">
-                <div class="accordion faq-accordion" id="contactFaqAccordion">
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="headingOne">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
-                                How quickly do you respond to quotation requests?
-                            </button>
-                        </h2>
-                        <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#contactFaqAccordion">
-                            <div class="accordion-body">
-                                Our international sales team operates round the clock. You can expect a detailed response with pricing, availability, and shipping estimates within 12 to 24 hours of submitting your inquiry.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="headingTwo">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
-                                Can I request a free sample before placing a bulk order?
-                            </button>
-                        </h2>
-                        <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#contactFaqAccordion">
-                            <div class="accordion-body">
-                                Yes, we encourage our B2B buyers to check our quality. We provide free product samples; however, the international courier/freight charges must be borne by the buyer.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="headingThree">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
-                                Do you arrange logistics and international shipping?
-                            </button>
-                        </h2>
-                        <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#contactFaqAccordion">
-                            <div class="accordion-body">
-                                Absolutely. We offer FOB (Free On Board) as well as CIF (Cost, Insurance, and Freight) terms. Our logistics team handles all customs clearance and ensures secure delivery to your destination port.
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Scroll Animation Script -->
+<!-- Scroll Reveal Script -->
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const reveals = document.querySelectorAll(".reveal");
@@ -278,11 +199,10 @@ include 'includes/breadcrumb.php';
                     observer.unobserve(entry.target);
                 }
             });
-        }, { threshold: 0.1 });
+        }, { threshold: 0.15 });
 
         reveals.forEach(reveal => revealOnScroll.observe(reveal));
     });
 </script>
 
-<!-- Include Footer -->
 <?php include 'includes/footer.php'; ?>
