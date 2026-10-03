@@ -7,9 +7,9 @@ $stmt_contact = $conn->query("SELECT * FROM contacts LIMIT 1");
 $contact_details = $stmt_contact ? $stmt_contact->fetch_assoc() : null;
 
 // 2. Fetch Active Footer Logo
-$stmt_footer_logo = $conn->query("SELECT logo_path FROM logos WHERE location = 'footer' AND is_active = 1 ORDER BY uploaded_at DESC LIMIT 1");
+$stmt_footer_logo = $conn->query("SELECT logo_path FROM logos WHERE location = 'header' AND is_active = 1 ORDER BY uploaded_at DESC LIMIT 1");
 $footer_logo_data = $stmt_footer_logo ? $stmt_footer_logo->fetch_assoc() : null;
-$footer_logo = $footer_logo_data ? $site . 'admin/' . $footer_logo_data['logo_path'] : 'assets/images/default-logo.png';
+$footer_logo = $footer_logo_data ? $site . 'admin/uploads/' . $footer_logo_data['logo_path'] : 'assets/images/logo/logo.webp';
 
 // 3. Fetch About Us Content (and truncate for 3-4 lines)
 $stmt_about = $conn->query("SELECT content FROM about_us LIMIT 1");
@@ -42,9 +42,11 @@ $wa_floating_msg = urlencode("Hi SS Bouncers, I am looking for professional secu
                 <!-- Column 1: About & Logo -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="footer-widget pe-lg-4">
-                        <a href="index.php" class="d-inline-block mb-4">
+                         <div class="bg-white d-flex align-items-center justify-content-center w-50 rounded py-2 mb-4">
+                            <a href="index.php" class="d-inline-block">
                             <img src="<?= htmlspecialchars($footer_logo) ?>" alt="SS Bouncers Footer Logo" class="footer-logo-img">
                         </a>
+                      </div>
                         <p class="footer-about-text mb-4">
                             <?= htmlspecialchars($about_snippet) ?>
                         </p>
