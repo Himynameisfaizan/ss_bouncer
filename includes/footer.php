@@ -1,13 +1,17 @@
 <?php
+// Ensure $conn and $site variables are accessible
 global $conn, $site;
 
+// 1. Fetch Contact Details & Copyright
 $stmt_contact = $conn->query("SELECT * FROM contacts LIMIT 1");
 $contact_details = $stmt_contact ? $stmt_contact->fetch_assoc() : null;
 
-$stmt_footer_logo = $conn->query("SELECT logo_path FROM logos WHERE location = 'header' AND is_active = 1 ORDER BY uploaded_at DESC LIMIT 1");
+// 2. Fetch Active Footer Logo
+$stmt_footer_logo = $conn->query("SELECT logo_path FROM logos WHERE location = 'footer' AND is_active = 1 ORDER BY uploaded_at DESC LIMIT 1");
 $footer_logo_data = $stmt_footer_logo ? $stmt_footer_logo->fetch_assoc() : null;
-$footer_logo = $footer_logo_data ? $site . 'admin/uploads/' . $footer_logo_data['logo_path'] : 'assets/images/default-logo.png';
+$footer_logo = $footer_logo_data ? $site . 'admin/' . $footer_logo_data['logo_path'] : 'assets/images/default-logo.png';
 
+// 3. Fetch About Us Content (and truncate for 3-4 lines)
 $stmt_about = $conn->query("SELECT content FROM about_us LIMIT 1");
 $about_data = $stmt_about ? $stmt_about->fetch_assoc() : null;
 $about_snippet = "";
@@ -16,6 +20,7 @@ if($about_data) {
     $about_snippet = mb_strimwidth($clean_text, 0, 160, "..."); 
 }
 
+// 4. Fetch Services for Footer Links
 $stmt_footer_services = $conn->query("SELECT id, service_name, slug_url FROM services WHERE status = 1 ORDER BY display_order ASC, service_name ASC LIMIT 5");
 $footer_services = [];
 if ($stmt_footer_services && $stmt_footer_services->num_rows > 0) {
@@ -23,6 +28,10 @@ if ($stmt_footer_services && $stmt_footer_services->num_rows > 0) {
         $footer_services[] = $row;
     }
 }
+
+// Formatting WhatsApp Number for Floating Button
+$wa_floating_num = !empty($contact_details['wp_number']) ? preg_replace('/[^0-9]/', '', $contact_details['wp_number']) : '';
+$wa_floating_msg = urlencode("Hi SS Bouncers, I am looking for professional security services.");
 ?>
 
     <!-- ==================== FOOTER ==================== -->
@@ -33,14 +42,13 @@ if ($stmt_footer_services && $stmt_footer_services->num_rows > 0) {
                 <!-- Column 1: About & Logo -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="footer-widget pe-lg-4">
-                       <div class="bg-white w-50 d-flex justify-content-center align-items-center border-3 my-4">
-                         <a href="index.php" class="d-inline-block mb-4">
+                        <a href="index.php" class="d-inline-block mb-4">
                             <img src="<?= htmlspecialchars($footer_logo) ?>" alt="SS Bouncers Footer Logo" class="footer-logo-img">
                         </a>
-                       </div>
                         <p class="footer-about-text mb-4">
                             <?= htmlspecialchars($about_snippet) ?>
                         </p>
+                        <!-- Social Links -->
                         <div class="footer-social">
                             <?php if(!empty($contact_details['facebook'])): ?>
                                 <a href="<?= htmlspecialchars($contact_details['facebook']) ?>" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
@@ -139,8 +147,8 @@ if ($stmt_footer_services && $stmt_footer_services->num_rows > 0) {
                     </div>
                     <div class="col-md-6 text-center text-md-end">
                         <ul class="list-inline mb-0 footer-bottom-links">
-                            <li class="list-inline-item"><a href="#">Privacy Policy</a></li>
-                            <li class="list-inline-item ms-3"><a href="#">Terms & Conditions</a></li>
+                            <li class="list-inline-item"><a href="privacy-policy.php">Privacy Policy</a></li>
+                            <li class="list-inline-item ms-3"><a href="terms-conditions.php">Terms & Conditions</a></li>
                         </ul>
                     </div>
                 </div>
@@ -148,7 +156,24 @@ if ($stmt_footer_services && $stmt_footer_services->num_rows > 0) {
         </div>
     </footer>
 
-    <!-- Bootstrap JS Link (Make sure this exists before body close) -->
+    <!-- ==================== FLOATING CONTACT BUTTONS ==================== -->
+    <div class="floating-contact-wrap">
+        <!-- WhatsApp Floating Button -->
+        <?php if(!empty($wa_floating_num)): ?>
+        <a href="https://wa.me/<?= $wa_floating_num ?>?text=<?= $wa_floating_msg ?>" target="_blank" class="floating-btn float-wa shadow-lg" title="Chat on WhatsApp">
+            <i class="fa-brands fa-whatsapp"></i>
+        </a>
+        <?php endif; ?>
+        
+        <!-- Call Floating Button -->
+        <?php if(!empty($contact_details['phone'])): ?>
+        <a href="tel:<?= htmlspecialchars($contact_details['phone']) ?>" class="floating-btn float-call shadow-lg" title="Call Us Now">
+            <i class="fa-solid fa-phone-volume"></i>
+        </a>
+        <?php endif; ?>
+    </div>
+
+    <!-- Bootstrap JS Link -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
