@@ -483,52 +483,70 @@
     background-color: var(--secondary-color) !important;
     transform: scale(1.3);
 }
-
-/* ================== CLIENT LOGOS (INFINITE SCROLL) ================== */
-.client-logos-section {
+/* ================== HOME GALLERY STYLES ================== */
+.home-gallery-section {
     background-color: var(--bg-white);
 }
 
-.tracking-wider {
-    letter-spacing: 2px;
+.home-gallery-item {
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    background-color: #f8f9fa;
 }
 
-.logo-slider-container {
+.home-gallery-item img {
+    transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 30% Primary Dark overlay with transparency */
+.home-gallery-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-}
-
-.logo-slider-track {
-    width: max-content;
-    animation: scrollLogos 25s linear infinite;
-}
-
-/* Pause animation on hover */
-.logo-slider-container:hover .logo-slider-track {
-    animation-play-state: paused;
-}
-
-.client-logo-img {
-    height: 70px;
-    width: auto;
-    object-fit: contain;
+    height: 100%;
+    background-color: rgba(11, 28, 61, 0.85); 
+    opacity: 0;
     transition: var(--transition-smooth);
 }
 
-/* Grayscale effect that turns to full color on hover (Premium feel) */
-.grayscale-hover {
-    filter: grayscale(100%) opacity(0.6);
+.home-gallery-overlay .icon-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(20px);
+    transition: var(--transition-smooth);
 }
 
-.logo-slide:hover .grayscale-hover {
-    filter: grayscale(0%) opacity(1);
+.home-gallery-overlay span {
+    transform: translateY(20px);
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    opacity: 0;
+}
+
+/* Hover Animations */
+.home-gallery-item:hover {
+    box-shadow: 0 15px 30px rgba(11, 28, 61, 0.15) !important;
+    transform: translateY(-8px);
+}
+
+.home-gallery-item:hover img {
     transform: scale(1.1);
 }
 
-@keyframes scrollLogos {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+.home-gallery-item:hover .home-gallery-overlay {
+    opacity: 1;
 }
 
+.home-gallery-item:hover .icon-circle,
+.home-gallery-item:hover span {
+    transform: translateY(0);
+    opacity: 1;
+}
 /* ================== BLOG SECTION STYLES ================== */
 .blog-card {
     transition: var(--transition-smooth);

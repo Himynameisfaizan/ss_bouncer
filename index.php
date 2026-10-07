@@ -571,39 +571,68 @@ $contact_data = $result_contact2 ? $result_contact2->fetch_assoc() : null;
 $map_url = !empty($contact_data['map']) ? $contact_data['map'] : '';
 ?>
 
-<!-- ==================== CLIENT LOGOS (DYNAMIC) ==================== -->
-<section class="client-logos-section py-5 border-top border-bottom">
-    <div class="container py-3">
-        <div class="text-center mb-4">
-            <h5 class="text-muted fw-bold text-uppercase tracking-wider">Trusted by Leading Companies</h5>
-        </div>
+<?php
+// Top par jahan baaki queries hain, isko bhi add kar lein:
+// Fetch latest 8 images for Homepage Gallery[cite: 11]
+$home_gallery_query = $conn->query("SELECT * FROM gallery ORDER BY ID DESC LIMIT 8");
+?>
+
+<!-- ==================== HOME GALLERY SECTION ==================== -->
+<section class="home-gallery-section py-5 bg-white border-top">
+    <div class="container py-5">
         
-        <div class="logo-slider-container overflow-hidden position-relative">
-            <div class="logo-slider-track d-flex align-items-center">
-                <?php 
-                if($result_brands && $result_brands->num_rows > 0): 
-                    $brands = [];
-                    while($brand = $result_brands->fetch_assoc()){
-                        $brands[] = $brand;
-                    }
-                    // Loop twice for infinite scroll effect
-                    for($i=0; $i<2; $i++):
-                        foreach($brands as $brand):
-                ?>
-                <div class="logo-slide mx-4">
-                    <img src="<?= $site ?>admin/<?= htmlspecialchars($brand['logo_path']) ?>" alt="<?= htmlspecialchars($brand['brand_name']) ?>" class="img-fluid client-logo-img grayscale-hover">
+        <!-- Section Header -->
+        <div class="row justify-content-center text-center mb-5 reveal">
+            <div class="col-lg-8">
+                <span class="sub-heading text-secondary-accent fw-bold text-uppercase tracking-wider">Our Gallery</span>
+                <h2 class="main-heading text-primary-dark fw-bold mt-2">Glimpses of Our Deployments</h2>
+               </div>
+        </div>
+
+        <!-- Gallery Grid -->
+        <div class="row g-4 reveal">
+            <?php 
+            if($home_gallery_query && $home_gallery_query->num_rows > 0): 
+                while($img = $home_gallery_query->fetch_assoc()): 
+                    // DB paths usually look like 'uploads/gallery/...'[cite: 11]
+                    $home_img_path = $site . 'admin/' . $img['image_path'];
+            ?>
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="home-gallery-item rounded-4 overflow-hidden shadow-sm position-relative h-100">
+                    <img src="<?= htmlspecialchars($home_img_path) ?>" alt="SS Bouncers Gallery" class="w-100 object-fit-cover" style="height: 250px;">
+                    
+                    <!-- Hover Overlay -->
+                    <div class="home-gallery-overlay d-flex align-items-center justify-content-center">
+                        <a href="gallery.php" class="text-white text-decoration-none text-center d-block w-100 h-100 d-flex flex-column align-items-center justify-content-center">
+                            <div class="icon-circle mb-2">
+                                <i class="fa-solid fa-link text-secondary-accent fs-4"></i>
+                            </div>
+                            <span class="fw-bold tracking-wider text-uppercase" style="font-size: 13px;">View More</span>
+                        </a>
+                    </div>
                 </div>
-                <?php 
-                        endforeach;
-                    endfor;
-                else: 
-                ?>
-                    <p class="text-center w-100 text-muted">No client logos found.</p>
-                <?php endif; ?>
+            </div>
+            <?php 
+                endwhile; 
+            else: 
+            ?>
+                <div class="col-12 text-center py-4">
+                    <p class="text-muted">Gallery images will be updated soon.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- View All Button -->
+        <div class="row mt-5 reveal">
+            <div class="col-12 text-center">
+                <a href="gallery.php" class="btn btn-outline-primary-custom btn-lg px-5">Explore Full Gallery</a>
             </div>
         </div>
+
     </div>
 </section>
+
+
 
 <!-- ==================== RECENT NEWS & BLOG (DYNAMIC) ==================== -->
 <section class="blog-section py-5 bg-light-custom">
